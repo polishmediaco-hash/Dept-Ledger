@@ -6,12 +6,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
   CheckCircle2, 
-  ArrowDownLeft, 
-  ArrowUpRight, 
   Search, 
   Check, 
-  RotateCcw,
-  ChevronRight
+  RotateCcw
 } from 'lucide-react';
 
 interface SettleDebtModalProps {
@@ -94,58 +91,58 @@ export const SettleDebtModal: React.FC<SettleDebtModalProps> = ({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-[101] bg-zinc-50 rounded-t-[32px] shadow-2xl overflow-hidden max-h-[92vh] flex flex-col mx-auto max-w-[500px]"
+            className="fixed bottom-0 left-0 right-0 z-[101] bg-zinc-50 dark:bg-zinc-900 rounded-t-[32px] shadow-2xl overflow-hidden max-h-[92vh] flex flex-col mx-auto max-w-[500px] border border-transparent dark:border-zinc-800"
           >
             {/* iOS Handle */}
             <div className="w-full flex justify-center pt-3 pb-1 shrink-0">
-              <div className="w-12 h-1.5 bg-zinc-300 rounded-full" />
+              <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
             </div>
 
             {/* Header */}
-            <div className="px-6 py-4 flex items-center justify-between border-b border-zinc-100 shrink-0">
+            <div className="px-6 py-4 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center">
-                  <CheckCircle2 className="w-6 h-6" />
+                <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-zinc-900 leading-tight">Settle Debts</h2>
-                  <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{activeDebtsCount} Active Records</p>
+                  <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 leading-tight">Settle Debts</h2>
+                  <p className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">{activeDebtsCount} active records</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-zinc-200 flex items-center justify-center text-zinc-600"
+                className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Filters & Search */}
-            <div className="p-4 bg-white border-b border-zinc-100 space-y-3 shrink-0">
+            <div className="p-4 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800 space-y-3 shrink-0">
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
                 <input
                   type="text"
                   placeholder="Search contacts..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-zinc-100 rounded-2xl text-sm font-bold text-zinc-900 outline-none focus:bg-zinc-200 transition-colors"
+                  className="w-full pl-9 pr-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-xl text-xs font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 transition-all"
                 />
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
                 {[
                   { id: 'all', label: 'All Active' },
-                  { id: 'i_owe', label: 'I Owe' },
-                  { id: 'owed_to_me', label: 'Owed' },
+                  { id: 'i_owe', label: '− I Owe' },
+                  { id: 'owed_to_me', label: '+ Owed' },
                   { id: 'settled', label: 'Settled' }
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setFilterDirection(tab.id as any)}
-                    className={`px-4 py-2 rounded-full text-xs font-black whitespace-nowrap uppercase tracking-widest transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                       filterDirection === tab.id 
-                        ? 'bg-zinc-900 text-white shadow-lg' 
-                        : 'bg-zinc-100 text-zinc-400 hover:bg-zinc-200'
+                        ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-xs' 
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
                     }`}
                   >
                     {tab.label}
@@ -155,7 +152,7 @@ export const SettleDebtModal: React.FC<SettleDebtModalProps> = ({
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2.5">
               {displayList.length > 0 ? (
                 displayList.map((debt) => {
                   const balance = debt.amount - debt.paidAmount;
@@ -165,37 +162,44 @@ export const SettleDebtModal: React.FC<SettleDebtModalProps> = ({
                   return (
                     <div
                       key={debt.id}
-                      className="bg-white rounded-[24px] border border-zinc-100 p-4 flex items-center justify-between shadow-sm active:scale-98 transition-transform"
+                      className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 p-3.5 flex items-center justify-between shadow-2xs transition-all"
                     >
-                      <div className="flex-1 min-w-0 pr-2" onClick={() => onSelectDebt(debt)}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className={`w-2 h-2 rounded-full ${isSettled ? 'bg-zinc-300' : isOwedToMe ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                          <h4 className="text-sm font-black text-zinc-900 truncate">{debt.contact.name}</h4>
+                      <div className="flex-1 min-w-0 pr-2 cursor-pointer" onClick={() => onSelectDebt(debt)}>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className={`w-2 h-2 rounded-full ${isSettled ? 'bg-zinc-300 dark:bg-zinc-600' : isOwedToMe ? 'theme-rec-bg' : 'theme-pay-bg'}`} />
+                          <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">{debt.contact.name}</h4>
                         </div>
-                        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest truncate">{debt.title || 'General'}</p>
+                        <p className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium truncate">{debt.title || 'General'}</p>
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 shrink-0">
                         <div className="text-right">
-                          <p className={`text-sm font-black ${isSettled ? 'text-zinc-300 line-through' : isOwedToMe ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {formatCurrency(balance, currency)}
+                          <p className={`text-xs font-bold tabular-nums ${
+                            isSettled 
+                              ? 'text-zinc-400 dark:text-zinc-500 line-through' 
+                              : isOwedToMe 
+                              ? 'theme-rec-text' 
+                              : 'theme-pay-text'
+                          }`}>
+                            {isSettled ? '' : isOwedToMe ? '+' : '−'}{formatCurrency(balance, currency)}
                           </p>
-                          <p className="text-[10px] font-bold text-zinc-400">Balance</p>
+                          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">Balance</p>
                         </div>
                         
                         {isSettled ? (
                           <button
                             onClick={() => handleSettle(debt)}
-                            className="w-10 h-10 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-400"
+                            className="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                            title="Reopen record"
                           >
-                            <RotateCcw className="w-5 h-5" />
+                            <RotateCcw className="w-4 h-4" />
                           </button>
                         ) : (
                           <button
                             onClick={() => handleSettle(debt)}
-                            className="h-10 px-4 rounded-2xl bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-500/20 flex items-center gap-1 active:scale-90 transition-transform"
+                            className="h-8 px-3 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-black dark:hover:bg-white text-white dark:text-zinc-900 font-bold text-xs flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
                           >
-                            <Check className="w-4 h-4" /> Settle
+                            <Check className="w-3.5 h-3.5" /> Settle
                           </button>
                         )}
                       </div>
@@ -204,16 +208,16 @@ export const SettleDebtModal: React.FC<SettleDebtModalProps> = ({
                 })
               ) : (
                 <div className="py-20 text-center">
-                  <CheckCircle2 className="w-12 h-12 text-zinc-100 mx-auto mb-4" />
-                  <p className="text-sm font-black text-zinc-300 uppercase tracking-widest">No matching records</p>
+                  <CheckCircle2 className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
+                  <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500">No matching records</p>
                 </div>
               )}
             </div>
 
-            <div className="p-6 bg-white border-t border-zinc-100 shrink-0">
+            <div className="p-4 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800 shrink-0">
               <button
                 onClick={onClose}
-                className="w-full py-4 rounded-2xl bg-zinc-950 text-white font-bold shadow-lg shadow-zinc-950/20 active:scale-95 transition-transform"
+                className="w-full py-3 rounded-xl bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold text-xs active:scale-98 transition-transform cursor-pointer"
               >
                 Close & Finish
               </button>

@@ -16,9 +16,10 @@ import {
   getDebtStatus,
 } from './utils/dateUtils';
 import { useFirebase } from './contexts/FirebaseContext';
-import { db, handleFirestoreError, OperationType, logout, testConnection } from './lib/firebase';
+import { db, handleFirestoreError, OperationType, logout } from './lib/firebase';
 import { doc, setDoc, addDoc, collection, deleteDoc, updateDoc } from 'firebase/firestore';
 import { AuthScreen } from './components/AuthScreen';
+import { AppHeader } from './components/AppHeader';
 import { IPhoneMainActions } from './components/IPhoneMainActions';
 import { IPhoneBottomBar } from './components/IPhoneBottomBar';
 import { FullBalanceSection } from './components/FullBalanceSection';
@@ -33,6 +34,7 @@ import { PriorityAdvisorModal } from './components/PriorityAdvisorModal';
 import { ExportImportModal } from './components/ExportImportModal';
 import { FullBalanceModal } from './components/FullBalanceModal';
 import { SettleDebtModal } from './components/SettleDebtModal';
+import { PaymentHistory } from './components/PaymentHistory';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, 
@@ -43,21 +45,38 @@ import {
   DollarSign,
   LogOut,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  History
 } from 'lucide-react';
 
 export default function App() {
   const { user, loading, debts, currencyPreference: currency, setCurrencyPreference } = useFirebase();
 
-  // Connection check
-  React.useEffect(() => {
-    if (user) {
-      testConnection();
+  // Dark / Night mode state & synchronization
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('ledger_theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+      localStorage.setItem('ledger_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      localStorage.setItem('ledger_theme', 'light');
     }
-  }, [user]);
+  }, [isDarkMode]);
+
+  const handleToggleDarkMode = () => {
+    setIsDarkMode(prev => !prev);
+  };
 
   // State for PWA standalone detection
-  const [activeNavTab, setActiveNavTab] = useState<'ledger' | 'balance' | 'settle' | 'advisor'>('ledger');
+  const [activeNavTab, setActiveNavTab] = useState<'ledger' | 'balance' | 'history'>('ledger');
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
@@ -396,98 +415,51 @@ export default function App() {
     }
   };
 
-  const handleBottomTabSelect = (tab: 'ledger' | 'balance' | 'settle' | 'advisor') => {
-    if (tab === 'balance') {
-      setActiveNavTab('balance');
-      setIsFullBalanceModalOpen(true);
-    } else if (tab === 'settle') {
-      setIsSettleModalOpen(true);
-    } else if (tab === 'advisor') {
-      setIsPriorityAdvisorOpen(true);
-    } else {
-      setActiveNavTab('ledger');
-    }
+  const handleBottomTabSelect = (tab: 'ledger' | 'balance' | 'history') => {
+    setActiveNavTab(tab);
   };
 
   return (
-    <div className="h-dvh w-full bg-zinc-50 flex flex-col font-sans selection:bg-zinc-900 selection:text-white overflow-hidden">
+    <div className="h-dvh w-full bg-zinc-50 dark:bg-zinc-950 flex flex-col font-sans selection:bg-zinc-900 selection:text-white dark:selection:bg-zinc-100 dark:selection:text-zinc-900 overflow-hidden transition-colors">
       
       {/* Main App Container */}
-      <div className="w-full flex-1 flex flex-col max-w-md mx-auto bg-zinc-50 relative overflow-hidden">
+      <div className="w-full flex-1 flex flex-col max-w-md mx-auto bg-zinc-50 dark:bg-zinc-950 relative overflow-hidden transition-colors">
         
-        {/* iOS Navigation Header */}
-        <header className="px-4 py-4 bg-white/90 backdrop-blur-md border-b border-zinc-200/70 flex items-center justify-between sticky top-0 z-30 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-zinc-900 text-emerald-400 flex items-center justify-center font-bold shadow-xs">
-              <DollarSign className="w-4 h-4" />
-            </div>
-            <div>
-              <h1 className="text-sm font-extrabold text-zinc-900 tracking-tight leading-tight">
-                Debt Ledger
-              </h1>
-              <p className="text-[10px] text-zinc-500">{user.email}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            {/* Currency picker */}
-            <select
-              value={currency}
-              onChange={(e) => setCurrencyPreference(e.target.value)}
-              className="bg-zinc-100 active:bg-zinc-200 text-zinc-800 text-[11px] font-bold rounded-lg px-2 py-1 outline-none cursor-pointer border border-zinc-200"
-            >
-              <option value="DZD">DZD (د.ج)</option>
-              <option value="$">$ (USD)</option>
-              <option value="€">€ (EUR)</option>
-              <option value="£">£ (GBP)</option>
-              <option value="¥">¥ (JPY)</option>
-              <option value="₹">₹ (INR)</option>
-              <option value="CHF">CHF</option>
-              <option value="zł">zł (PLN)</option>
-              <option value="kr">kr (SEK)</option>
-              <option value="CAD">CAD</option>
-              <option value="R$">BRL (R$)</option>
-            </select>
-
-            {/* Logout */}
-            <button
-              onClick={logout}
-              className="p-1.5 rounded-lg text-zinc-500 active:text-red-600 active:bg-red-50 transition-colors active:scale-95"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-
-            {/* Backup Export */}
-            <button
-              onClick={() => setIsExportModalOpen(true)}
-              className="p-1.5 rounded-lg text-zinc-500 active:text-zinc-900 active:bg-zinc-200/60 transition-colors active:scale-95"
-              title="Backup / Export"
-            >
-              <Download className="w-4 h-4" />
-            </button>
-          </div>
-        </header>
+        {/* Navigation Header with Logo, Quick Alerts, Currency, Export & Account */}
+        <AppHeader
+          user={user}
+          currency={currency}
+          onCurrencyChange={(curr) => setCurrencyPreference(curr)}
+          onOpenExport={() => setIsExportModalOpen(true)}
+          onOpenAdvisor={() => setIsPriorityAdvisorOpen(true)}
+          onLogout={logout}
+          urgentCount={urgentCount}
+          isStandalone={isStandalone}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={handleToggleDarkMode}
+        />
 
         {/* Scrollable iPhone Main Content Area */}
-        <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-32 scroll-smooth">
+        <main className="flex-1 overflow-y-auto px-4 py-3 space-y-3 pb-32 scroll-smooth">
           
-          {/* 3 Core Primary Action Buttons: Add Debt, Settle Debt, Full Balance */}
+          {/* Top Slim Balance Summary Bar */}
           <IPhoneMainActions
             onOpenAddModal={() => {
               setEditingDebt(null);
               setIsDebtModalOpen(true);
             }}
             onOpenSettleModal={() => setIsSettleModalOpen(true)}
-            onOpenFullBalance={() => setIsFullBalanceModalOpen(true)}
+            onOpenFullBalance={() => setActiveNavTab('balance')}
             unsettledCount={activeDebts.length}
             totalIOwe={totalIOwe}
             totalOwedToMe={totalOwedToMe}
             currency={currency}
           />
 
-          {/* Full Balance 2-Column Inline View (When Balance Tab is Active) */}
-          {activeNavTab === 'balance' && (
+          {/* View Switcher based on activeNavTab */}
+          {activeNavTab === 'history' ? (
+            <PaymentHistory debts={debts} currency={currency} />
+          ) : activeNavTab === 'balance' ? (
             <FullBalanceSection
               debts={debts}
               currency={currency}
@@ -501,83 +473,78 @@ export default function App() {
                 setIsDebtModalOpen(true);
               }}
             />
-          )}
-
-          {/* Filter & Search Controls */}
-          <FilterBar
-            tabFilter={tabFilter}
-            setTabFilter={setTabFilter}
-            categoryFilter={categoryFilter}
-            setCategoryFilter={setCategoryFilter}
-            priorityFilter={priorityFilter}
-            setPriorityFilter={setPriorityFilter}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            sortField={sortField}
-            setSortField={setSortField}
-            sortOrder={sortOrder}
-            setSortOrder={setSortOrder}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            counts={counts}
-          />
-
-          {/* Debts List */}
-          {filteredAndSortedDebts.length > 0 ? (
-            <div className="space-y-3">
-              {filteredAndSortedDebts.map((debt) => (
-                <DebtCard
-                  key={debt.id}
-                  debt={debt}
-                  currency={currency}
-                  onRecordPayment={(d) => {
-                    setPaymentTargetDebt(d);
-                    setIsPaymentModalOpen(true);
-                  }}
-                  onViewDetails={(d) => {
-                    setDetailTargetDebt(d);
-                    setIsDetailModalOpen(true);
-                  }}
-                  onEditDebt={(d) => {
-                    setEditingDebt(d);
-                    setIsDebtModalOpen(true);
-                  }}
-                  onDeleteDebt={handleDeleteDebt}
-                  onQuickSettle={handleQuickSettle}
-                  onOpenReminder={(d) => {
-                    setReminderTargetDebt(d);
-                    setIsReminderModalOpen(true);
-                  }}
-                />
-              ))}
-            </div>
           ) : (
-            /* Empty State */
-            <div className="bg-white border border-zinc-200/90 rounded-2xl p-8 text-center shadow-2xs my-4">
-              <div className="h-10 w-10 rounded-2xl bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto mb-2">
-                {searchQuery ? <SearchX className="w-5 h-5" /> : <Inbox className="w-5 h-5" />}
-              </div>
-              <h3 className="text-xs font-bold text-zinc-900">
-                {searchQuery ? 'No matching entries found' : 'No records yet'}
-              </h3>
-              <p className="text-[11px] text-zinc-500 mt-1 mb-3">
-                {searchQuery
-                  ? `No financial records matched "${searchQuery}".`
-                  : 'Tap "Add Debt" above to record who owes you or who you owe.'}
-              </p>
-              <button
-                onClick={() => {
-                  setEditingDebt(null);
-                  setIsDebtModalOpen(true);
-                }}
-                className="px-4 py-2 bg-zinc-900 active:bg-zinc-800 text-white font-bold rounded-xl text-xs transition-all shadow-xs inline-flex items-center gap-1.5"
-              >
-                <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Add First Debt</span>
-              </button>
-            </div>
+            <>
+              {/* Filter & Search Controls */}
+              <FilterBar
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                sortField={sortField}
+                setSortField={setSortField}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                directionFilter={tabFilter}
+                setDirectionFilter={setTabFilter}
+              />
+
+              {/* Debts List View */}
+              {filteredAndSortedDebts.length > 0 ? (
+                <div className="space-y-2.5">
+                  {filteredAndSortedDebts.map((debt) => (
+                    <DebtCard
+                      key={debt.id}
+                      debt={debt}
+                      currency={currency}
+                      onRecordPayment={(d) => {
+                        setPaymentTargetDebt(d);
+                        setIsPaymentModalOpen(true);
+                      }}
+                      onViewDetails={(d) => {
+                        setDetailTargetDebt(d);
+                        setIsDetailModalOpen(true);
+                      }}
+                      onEditDebt={(d) => {
+                        setEditingDebt(d);
+                        setIsDebtModalOpen(true);
+                      }}
+                      onDeleteDebt={handleDeleteDebt}
+                      onQuickSettle={handleQuickSettle}
+                      onOpenReminder={(d) => {
+                        setReminderTargetDebt(d);
+                        setIsReminderModalOpen(true);
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                /* Empty State */
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-8 text-center shadow-2xs my-4 transition-colors">
+                  <div className="h-10 w-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 flex items-center justify-center mx-auto mb-2">
+                    {searchQuery ? <SearchX className="w-5 h-5" /> : <Inbox className="w-5 h-5" />}
+                  </div>
+                  <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                    {searchQuery ? 'No matching entries found' : 'No records yet'}
+                  </h3>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 mb-3">
+                    {searchQuery
+                      ? `No financial records matched "${searchQuery}".`
+                      : 'Tap "+" below to record who owes you or who you owe.'}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setEditingDebt(null);
+                      setIsDebtModalOpen(true);
+                    }}
+                    className="px-4 py-2 bg-zinc-900 dark:bg-zinc-100 hover:bg-black dark:hover:bg-white text-white dark:text-zinc-900 font-bold rounded-xl text-xs transition-all shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600" />
+                    <span>Add First Debt</span>
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </main>
 
@@ -589,7 +556,6 @@ export default function App() {
             setEditingDebt(null);
             setIsDebtModalOpen(true);
           }}
-          unsettledCount={activeDebts.length}
           urgentCount={urgentCount}
         />
 

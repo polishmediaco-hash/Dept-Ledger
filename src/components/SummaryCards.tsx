@@ -2,13 +2,7 @@ import React from 'react';
 import { DebtItem } from '../types';
 import { formatCurrency, getDaysUntilDue, getPriorityScore } from '../utils/dateUtils';
 import { 
-  ArrowDownLeft, 
-  ArrowUpRight, 
-  Scale, 
   AlertCircle, 
-  Clock, 
-  Briefcase, 
-  User, 
   CheckCircle2,
   ChevronRight,
   Sparkles
@@ -27,7 +21,6 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
   currency,
   onFilterTab,
   onOpenPriorityAdvisor,
-  onSelectDebt,
 }) => {
   const activeDebts = debts.filter(d => (d.amount - d.paidAmount) > 0.001);
 
@@ -59,27 +52,26 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       <div 
         id="summary-card-owed-to-me"
         onClick={() => onFilterTab('owed_to_me')}
-        className="bg-white border border-zinc-200/90 rounded-2xl p-4 shadow-2xs hover:shadow-xs transition-all cursor-pointer hover:border-emerald-300 group"
+        className="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-4 shadow-2xs hover:shadow-xs transition-all cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-700 group"
       >
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-              <ArrowDownLeft className="w-4 h-4" />
-            </div>
-            <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Owed To Me</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Owed To Me</span>
           </div>
-          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">
+          <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
             {owedToMeItems.length} active
           </span>
         </div>
 
-        <div className="text-2xl font-extrabold text-emerald-800 tracking-tight mb-2">
+        <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mb-2 tabular-nums">
+          <span className="text-emerald-700 dark:text-emerald-400 font-semibold mr-0.5">+</span>
           {formatCurrency(totalOwedToMe, currency)}
         </div>
 
-        <div className="flex items-center justify-between text-[11px] text-zinc-500 pt-2 border-t border-zinc-100">
-          <span>Personal: <strong className="text-zinc-700">{formatCurrency(owedToMePersonal, currency)}</strong></span>
-          <span>Business: <strong className="text-zinc-700">{formatCurrency(owedToMeBusiness, currency)}</strong></span>
+        <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <span>Personal: <strong className="text-zinc-700 dark:text-zinc-300">{formatCurrency(owedToMePersonal, currency)}</strong></span>
+          <span>Business: <strong className="text-zinc-700 dark:text-zinc-300">{formatCurrency(owedToMeBusiness, currency)}</strong></span>
         </div>
       </div>
 
@@ -87,27 +79,26 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       <div 
         id="summary-card-i-owe"
         onClick={() => onFilterTab('i_owe')}
-        className="bg-white border border-zinc-200/90 rounded-2xl p-4 shadow-2xs hover:shadow-xs transition-all cursor-pointer hover:border-rose-300 group"
+        className="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-4 shadow-2xs hover:shadow-xs transition-all cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-700 group"
       >
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center font-bold">
-              <ArrowUpRight className="w-4 h-4" />
-            </div>
-            <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider">I Owe</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+            <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">I Owe</span>
           </div>
-          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-800 border border-rose-100">
+          <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
             {iOweItems.length} active
           </span>
         </div>
 
-        <div className="text-2xl font-extrabold text-rose-800 tracking-tight mb-2">
+        <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mb-2 tabular-nums">
+          <span className="text-rose-700 dark:text-rose-400 font-semibold mr-0.5">−</span>
           {formatCurrency(totalIOwe, currency)}
         </div>
 
-        <div className="flex items-center justify-between text-[11px] text-zinc-500 pt-2 border-t border-zinc-100">
-          <span>Personal: <strong className="text-zinc-700">{formatCurrency(iOwePersonal, currency)}</strong></span>
-          <span>Business: <strong className="text-zinc-700">{formatCurrency(iOweBusiness, currency)}</strong></span>
+        <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+          <span>Personal: <strong className="text-zinc-700 dark:text-zinc-300">{formatCurrency(iOwePersonal, currency)}</strong></span>
+          <span>Business: <strong className="text-zinc-700 dark:text-zinc-300">{formatCurrency(iOweBusiness, currency)}</strong></span>
         </div>
       </div>
 
@@ -115,37 +106,36 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       <div 
         id="summary-card-net"
         onClick={() => onFilterTab('all')}
-        className="bg-white border border-zinc-200/90 rounded-2xl p-4 shadow-2xs hover:shadow-xs transition-all cursor-pointer hover:border-zinc-300"
+        className="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-4 shadow-2xs hover:shadow-xs transition-all cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-700"
       >
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-zinc-100 text-zinc-700 flex items-center justify-center font-bold">
-              <Scale className="w-4 h-4" />
-            </div>
-            <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Net Position</span>
+          <div className="flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${netPosition >= 0 ? 'bg-emerald-500' : 'bg-rose-500'} shrink-0`} />
+            <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Net Position</span>
           </div>
-          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-            netPosition >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${
+            netPosition >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300'
           }`}>
             {netPosition >= 0 ? 'Surplus' : 'Deficit'}
           </span>
         </div>
 
-        <div className={`text-2xl font-extrabold tracking-tight mb-2 ${
-          netPosition >= 0 ? 'text-emerald-700' : 'text-rose-700'
-        }`}>
-          {netPosition < 0 ? '-' : '+'}{formatCurrency(Math.abs(netPosition), currency)}
+        <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight mb-2 tabular-nums">
+          <span className={`${netPosition >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'} font-semibold mr-0.5`}>
+            {netPosition >= 0 ? '+' : '−'}
+          </span>
+          {formatCurrency(Math.abs(netPosition), currency)}
         </div>
 
-        <div className="text-[11px] text-zinc-500 pt-2 border-t border-zinc-100 flex items-center justify-between">
+        <div className="text-[11px] text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <span>{activeDebts.length} total active</span>
           {overdueItems.length > 0 ? (
-            <span className="font-bold text-rose-600 flex items-center gap-1">
+            <span className="font-bold text-rose-700 dark:text-rose-400 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
               <span>{overdueItems.length} Overdue</span>
             </span>
           ) : (
-            <span className="text-emerald-600 flex items-center gap-1">
+            <span className="text-emerald-700 dark:text-emerald-400 flex items-center gap-1 font-semibold">
               <CheckCircle2 className="w-3 h-3" />
               <span>All on schedule</span>
             </span>
@@ -157,16 +147,14 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
       <div 
         id="summary-card-advisor"
         onClick={onOpenPriorityAdvisor}
-        className="bg-white border border-amber-200/80 rounded-2xl p-4 shadow-2xs hover:shadow-xs transition-all cursor-pointer hover:border-amber-300 relative group"
+        className="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-4 shadow-2xs hover:shadow-xs transition-all cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-700 relative group"
       >
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
-              <Sparkles className="w-4 h-4 text-amber-600" />
-            </div>
-            <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Pay Next</span>
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+            <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Pay Next</span>
           </div>
-          <span className="text-[11px] font-bold text-amber-700 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+          <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 flex items-center gap-0.5 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
             <span>Advisor</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </span>
@@ -175,26 +163,26 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
         {topPayable ? (
           <div>
             <div className="flex items-baseline justify-between mb-0.5">
-              <h4 className="font-bold text-zinc-900 text-sm truncate max-w-[130px]">
+              <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm truncate max-w-[130px]">
                 {topPayable.contact.name}
               </h4>
-              <span className="text-xs font-bold text-rose-700">
+              <span className="text-xs font-bold text-rose-700 dark:text-rose-400 tabular-nums">
                 {formatCurrency(topPayable.amount - topPayable.paidAmount, currency)}
               </span>
             </div>
-            <p className="text-[11px] text-zinc-500 truncate mb-2">
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mb-2">
               {topPayable.dueDate ? `Due ${topPayable.dueDate}` : 'Top urgency priority'}
             </p>
-            <div className="text-[11px] font-semibold text-amber-800 pt-2 border-t border-zinc-100 flex items-center justify-between">
+            <div className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
               <span>Urgency Ranking</span>
-              <span className="capitalize text-zinc-600">{topPayable.priority} Priority</span>
+              <span className="capitalize font-semibold text-zinc-800 dark:text-zinc-200">{topPayable.priority} Priority</span>
             </div>
           </div>
         ) : (
           <div>
-            <div className="text-sm font-bold text-zinc-800 mt-1">No debts to pay!</div>
-            <p className="text-[11px] text-zinc-500 mt-1 mb-2">You currently have zero pending payables.</p>
-            <div className="text-[11px] text-emerald-700 pt-2 border-t border-zinc-100 font-semibold">
+            <div className="text-sm font-bold text-zinc-800 dark:text-zinc-200 mt-1">No debts to pay!</div>
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 mb-2">You currently have zero pending payables.</p>
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 pt-2 border-t border-zinc-100 dark:border-zinc-800 font-semibold">
               100% Debt Free
             </div>
           </div>
@@ -203,3 +191,4 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({
     </div>
   );
 };
+

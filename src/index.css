@@ -1,1 +1,90 @@
 @import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    /* Option 3: Antique Sage & Burnt Terracotta / Rust */
+    --rec-text: #164E3D;
+    --rec-bg: #E1EFE7;
+    --rec-border: #A3CFB8;
+    --rec-solid: #266E53;
+    --rec-soft-bg: rgba(38, 110, 83, 0.14);
+
+    --pay-text: #662514;
+    --pay-bg: #FCECE6;
+    --pay-border: #E8B4A2;
+    --pay-solid: #AF3D1E;
+    --pay-soft-bg: rgba(175, 61, 30, 0.14);
+  }
+
+  .dark {
+    --rec-text: #6EE7B7;
+    --rec-bg: rgba(6, 78, 59, 0.45);
+    --rec-border: #047857;
+    --rec-solid: #10B981;
+    --rec-soft-bg: rgba(16, 185, 129, 0.15);
+
+    --pay-text: #FDA4AF;
+    --pay-bg: rgba(76, 5, 25, 0.45);
+    --pay-border: #9F1239;
+    --pay-solid: #F43F5E;
+    --pay-soft-bg: rgba(244, 63, 94, 0.15);
+  }
+
+  html.dark,
+  body.dark,
+  .dark {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #FAFAF9;
+    color: #18181B;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  html.dark body,
+  body.dark {
+    background-color: #09090B;
+    color: #F4F4F5;
+  }
+
+  /* Universal tabular figures for crisp accounting numbers */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Theme helper utility classes */
+.theme-rec-badge {
+  background-color: var(--rec-bg) !important;
+  color: var(--rec-text) !important;
+  border-color: var(--rec-border) !important;
+}
+
+.theme-rec-text {
+  color: var(--rec-solid) !important;
+}
+
+.theme-rec-bg {
+  background-color: var(--rec-solid) !important;
+}
+
+.theme-pay-badge {
+  background-color: var(--pay-bg) !important;
+  color: var(--pay-text) !important;
+  border-color: var(--pay-border) !important;
+}
+
+.theme-pay-text {
+  color: var(--pay-solid) !important;
+}
+
+.theme-pay-bg {
+  background-color: var(--pay-solid) !important;
+}
+
+

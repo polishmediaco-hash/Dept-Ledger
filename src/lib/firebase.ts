@@ -1,7 +1,9 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { 
-  getFirestore, 
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   doc, 
   setDoc, 
   getDoc, 
@@ -12,8 +14,7 @@ import {
   updateDoc, 
   deleteDoc, 
   addDoc, 
-  serverTimestamp, 
-  getDocFromServer 
+  serverTimestamp
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -22,7 +23,13 @@ export const auth = getAuth(app);
 // Ensure persistence is set to local
 setPersistence(auth, browserLocalPersistence).catch(err => console.error('Persistence error:', err));
 
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || undefined);
+export const db = initializeFirestore(app, {
+  experimentalAutoDetectLongPolling: true,
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+}, firebaseConfig.firestoreDatabaseId || undefined);
+
 export const googleProvider = new GoogleAuthProvider();
 
 export enum OperationType {
@@ -69,31 +76,20 @@ export function handleFirestoreError(error: any, operationType: OperationType, p
     },
     operationType,
     path
-  }
+  };
   
-  console.error('Firestore Error Detailed:', {
-    code: error?.code,
-    message: error?.message,
-    operation: operationType,
-    path,
-    isUnavailable
-  });
-
   if (isUnavailable) {
-    console.warn('Firestore is currently unavailable. This might be a temporary network issue or the database is still provisioning.');
+    console.warn('Firestore is currently operating in offline-cached mode or reconnecting...');
+  } else {
+    console.error('Firestore Error Detailed:', {
+      code: error?.code,
+      message: error?.message,
+      operation: operationType,
+      path
+    });
   }
 
-  throw new Error(JSON.stringify(errInfo));
-}
-
-// Test connection on boot
-export async function testConnection() {
-  try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-    console.log('Firestore: Connection successful');
-  } catch (error) {
-    console.error('Firestore: Connection test failed:', error);
-  }
+  return errInfo;
 }
 
 export const signInWithGoogle = async () => {

@@ -1,6 +1,6 @@
 import React from 'react';
+import { AppLogo } from './AppLogo';
 import { 
-  DollarSign, 
   Plus, 
   Sparkles, 
   Download, 
@@ -43,12 +43,10 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         {/* Brand & Title */}
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-xs">
-            <DollarSign className="w-5 h-5 text-emerald-400" />
-          </div>
+          <AppLogo size="md" />
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-lg font-bold text-zinc-900 tracking-tight">Debt & Loan Ledger</h1>
+              <h1 className="text-base sm:text-lg font-black text-zinc-900 tracking-wider font-mono">LEDGER</h1>
               <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 border border-zinc-200">
                 Personal & Business
               </span>

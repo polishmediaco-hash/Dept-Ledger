@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DebtItem } from '../types';
 import { formatCurrency } from '../utils/dateUtils';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
-  TrendingUp,
-  TrendingDown,
-  PieChart,
+  PieChart, 
   Plus,
-  DollarSign
+  Scale
 } from 'lucide-react';
 
 interface FullBalanceModalProps {
@@ -26,7 +24,6 @@ export const FullBalanceModal: React.FC<FullBalanceModalProps> = ({
   onClose,
   debts,
   currency,
-  onSelectDebt,
   onOpenAddModal,
 }) => {
   const activeDebts = debts.filter(d => (d.amount - d.paidAmount) > 0.001);
@@ -38,6 +35,8 @@ export const FullBalanceModal: React.FC<FullBalanceModalProps> = ({
   const totalOwedToMe = activeDebts
     .filter(d => d.direction === 'owed_to_me')
     .reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
+
+  const netBalance = totalOwedToMe - totalIOwe;
 
   const debtsByCategory = activeDebts.reduce((acc, d) => {
     acc[d.category] = (acc[d.category] || 0) + (d.amount - d.paidAmount);
@@ -59,76 +58,78 @@ export const FullBalanceModal: React.FC<FullBalanceModalProps> = ({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="w-full max-w-2xl bg-white sm:rounded-[32px] overflow-hidden flex flex-col h-[92vh] sm:h-[85vh] shadow-2xl border border-zinc-200"
+            className="w-full max-w-2xl bg-white dark:bg-zinc-900 sm:rounded-3xl overflow-hidden flex flex-col h-[92vh] sm:h-[85vh] shadow-2xl border border-zinc-200 dark:border-zinc-800"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-10">
+            <div className="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md z-10">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-zinc-900 text-emerald-400 flex items-center justify-center shadow-lg">
-                  <DollarSign className="w-5 h-5" />
+                <div className="h-9 w-9 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 flex items-center justify-center shadow-xs">
+                  <Scale className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-zinc-900">Financial Overview</h2>
-                  <p className="text-xs text-zinc-500 font-medium tracking-wide uppercase">Full Balance Ledger</p>
+                  <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Financial Overview</h2>
+                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium tracking-wide uppercase">Full Balance Ledger</p>
                 </div>
               </div>
               <button 
                 onClick={onClose}
-                className="p-2.5 rounded-full hover:bg-zinc-100 text-zinc-400 transition-colors"
+                className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 dark:text-zinc-500 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-8">
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
               {/* Main Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <div className="bg-white border-2 border-emerald-100 rounded-[28px] p-6 shadow-sm flex flex-col justify-between">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-5 shadow-2xs flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center gap-2 text-emerald-600 font-black mb-1">
-                      <TrendingUp className="w-4 h-4" />
-                      <span className="text-[10px] uppercase tracking-[0.15em]">Money Owed To Me</span>
+                    <div className="flex items-center gap-1.5 font-semibold mb-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                      <span className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">Owed to You</span>
                     </div>
-                    <div className="text-4xl font-black text-zinc-900">{currency}{totalOwedToMe.toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums mt-2">
+                      {formatCurrency(totalOwedToMe, currency)}
+                    </div>
                   </div>
-                  <div className="mt-4 flex items-center gap-2">
-                    <div className="h-2 flex-1 bg-zinc-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: '70%' }}></div>
-                    </div>
-                    <span className="text-[10px] font-black text-emerald-600">INCOME</span>
+                  <div className="mt-4">
+                    <span className="text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-md">
+                      Receivable
+                    </span>
                   </div>
                 </div>
 
-                <div className="bg-white border-2 border-rose-100 rounded-[28px] p-6 shadow-sm flex flex-col justify-between">
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-5 shadow-2xs flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center gap-2 text-rose-600 font-black mb-1">
-                      <TrendingDown className="w-4 h-4" />
-                      <span className="text-[10px] uppercase tracking-[0.15em]">Money I Owe</span>
+                    <div className="flex items-center gap-1.5 font-semibold mb-1">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                      <span className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">You Owe</span>
                     </div>
-                    <div className="text-4xl font-black text-zinc-900">{currency}{totalIOwe.toLocaleString()}</div>
+                    <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums mt-2">
+                      {formatCurrency(totalIOwe, currency)}
+                    </div>
                   </div>
-                  <div className="mt-4 flex items-center gap-2">
-                    <div className="h-2 flex-1 bg-zinc-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-rose-500 rounded-full" style={{ width: '30%' }}></div>
-                    </div>
-                    <span className="text-[10px] font-black text-rose-600">DEBT</span>
+                  <div className="mt-4">
+                    <span className="text-[10px] font-medium bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 px-2 py-0.5 rounded-md">
+                      Payable
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Categories */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest ml-1">Category Distribution</h3>
+              <div className="space-y-3">
+                <h3 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Category Distribution</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {Object.entries(debtsByCategory).map(([cat, amount], idx) => (
-                    <div key={idx} className="bg-zinc-50 border border-zinc-100 p-4 rounded-2xl flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-white border border-zinc-200 flex items-center justify-center text-zinc-900 shadow-sm">
-                        <PieChart className="w-5 h-5" />
+                    <div key={idx} className="bg-zinc-50 dark:bg-zinc-850 border border-zinc-200/80 dark:border-zinc-800 p-3.5 rounded-xl flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 dark:text-zinc-300 shadow-2xs">
+                        <PieChart className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="text-[10px] font-bold text-zinc-400 uppercase">{cat}</div>
-                        <div className="text-base font-bold text-zinc-900">{currency}{amount.toLocaleString()}</div>
+                        <div className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase">{cat}</div>
+                        <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{formatCurrency(Number(amount), currency)}</div>
                       </div>
                     </div>
                   ))}
@@ -136,32 +137,38 @@ export const FullBalanceModal: React.FC<FullBalanceModalProps> = ({
               </div>
 
               {/* Financial Health Summary */}
-              <div className="mt-8 p-6 bg-zinc-50 border border-zinc-200 rounded-[24px] text-zinc-900 overflow-hidden relative">
-                 <div className="relative z-10">
-                   <h3 className="text-lg font-bold mb-1">Financial Health</h3>
-                   <p className="text-zinc-500 text-sm mb-4">Your net balance is {currency}{(totalOwedToMe - totalIOwe).toLocaleString()}</p>
-                   <div className="flex gap-2">
-                     <div className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full border border-emerald-200 uppercase tracking-wider">Optimized</div>
-                     <div className="px-3 py-1 bg-zinc-100 text-zinc-500 text-[10px] font-bold rounded-full border border-zinc-200 uppercase tracking-wider">Verified</div>
-                   </div>
-                 </div>
-                 <DollarSign className="absolute -right-4 -bottom-4 w-32 h-32 text-zinc-900/5 rotate-12" />
+              <div className="p-5 bg-zinc-50 dark:bg-zinc-850 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl text-zinc-900 dark:text-zinc-100">
+                <h3 className="text-sm font-bold mb-1">Net Position</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 text-xs mb-3">
+                  Your overall net balance is{' '}
+                  <strong className={`font-bold tabular-nums ${netBalance >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
+                    <span className="mr-1">{netBalance >= 0 ? '+' : '−'}</span>
+                    <span>{formatCurrency(Math.abs(netBalance), currency)}</span>
+                  </strong>
+                </p>
+                <div className="flex gap-2">
+                  <div className={`px-2.5 py-1 text-[11px] font-medium rounded-lg ${
+                    netBalance >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300'
+                  }`}>
+                    {netBalance >= 0 ? 'Surplus (+)' : 'Deficit (–)'}
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Footer Action */}
-            <div className="p-6 border-t border-zinc-100 bg-zinc-50/50 flex gap-3">
+            <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex gap-2.5">
               <button 
                 onClick={onOpenAddModal}
-                className="flex-1 py-4 bg-zinc-100 text-zinc-900 border border-zinc-200 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                className="flex-1 py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                <Plus className="w-5 h-5" /> Add Entry
+                <Plus className="w-4 h-4" /> Add Record
               </button>
               <button 
                 onClick={onClose}
-                className="flex-1 py-4 bg-zinc-900 text-white rounded-2xl font-bold shadow-xl shadow-zinc-900/10 active:scale-[0.98] transition-all"
+                className="flex-1 py-3 bg-zinc-900 dark:bg-zinc-100 hover:bg-black dark:hover:bg-white text-white dark:text-zinc-900 rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer"
               >
-                Close Insights
+                Close
               </button>
             </div>
           </motion.div>

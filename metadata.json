@@ -1,6 +1,6 @@
 {
   "name": "Debt & Loan Tracker",
-  "description": "Track who owes you and who you owe across personal and business finances, with deadlines, aging duration, priority levels, contact info, and repayment planning.",
+  "description": "LEDGER — Track what you owe and what's owed to you with monthly cashflow charts, due date calendar, and cloud sync.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -81,58 +81,58 @@ export const PriorityAdvisorModal: React.FC<PriorityAdvisorModalProps> = ({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-[101] bg-zinc-950 text-white rounded-t-[32px] shadow-2xl overflow-hidden h-[94vh] flex flex-col mx-auto max-w-[600px]"
+            className="fixed bottom-0 left-0 right-0 z-[101] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-t-[32px] shadow-2xl overflow-hidden h-[94vh] flex flex-col mx-auto max-w-[600px] border border-zinc-200 dark:border-zinc-800"
           >
             {/* iOS Handle */}
             <div className="w-full flex justify-center pt-3 pb-1 shrink-0">
-              <div className="w-12 h-1.5 bg-zinc-800 rounded-full" />
+              <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
             </div>
 
             {/* Header */}
-            <div className="px-6 py-4 flex items-center justify-between border-b border-zinc-900 shrink-0">
+            <div className="px-6 py-4 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-amber-400">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black leading-tight">Priority Advisor</h2>
-                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Strategic Pay-Off Ranking</p>
+                  <h2 className="text-lg font-black leading-tight text-zinc-900 dark:text-zinc-100">Priority Advisor</h2>
+                  <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Strategic Pay-Off Ranking</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400"
+                className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Quick Stats Banner */}
-            <div className="px-6 py-6 bg-zinc-900 shrink-0 border-b border-zinc-800">
+            <div className="px-6 py-6 bg-zinc-50 dark:bg-zinc-850 shrink-0 border-b border-zinc-200 dark:border-zinc-800">
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Total Payables</p>
-                  <p className="text-3xl font-black text-white leading-none tracking-tight">
+                  <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1">Total Payables</p>
+                  <p className="text-3xl font-black text-zinc-900 dark:text-white leading-none tracking-tight">
                     {formatCurrency(totalOwed, currency)}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   {overdueCount > 0 && (
-                    <div className="bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-xl flex items-center gap-2">
-                      <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-                      <span className="text-[10px] font-black text-rose-500 uppercase">{overdueCount} Overdue</span>
+                    <div className="bg-rose-100 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 px-3 py-1.5 rounded-xl flex items-center gap-2">
+                      <AlertTriangle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                      <span className="text-[10px] font-black text-rose-700 dark:text-rose-300 uppercase">{overdueCount} Overdue</span>
                     </div>
                   )}
-                  <div className="bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded-xl">
-                    <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{payables.length} Accounts</span>
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-750 px-3 py-1.5 rounded-xl">
+                    <span className="text-[10px] font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">{payables.length} Accounts</span>
                   </div>
                 </div>
               </div>
 
               {/* Strategy Switcher */}
               <div className="mt-8 space-y-4">
-                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Select Strategy</p>
-                <div className="flex p-1 bg-zinc-950 rounded-2xl border border-zinc-800">
+                <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Select Strategy</p>
+                <div className="flex p-1 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-750">
                   {[
                     { id: 'urgency', label: 'Urgency', icon: Zap },
                     { id: 'snowball', label: 'Snowball', icon: TrendingDown },
@@ -143,8 +143,10 @@ export const PriorityAdvisorModal: React.FC<PriorityAdvisorModalProps> = ({
                       <button
                         key={tab.id}
                         onClick={() => setStrategy(tab.id as any)}
-                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                          strategy === tab.id ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-500'
+                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                          strategy === tab.id
+                            ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-md'
+                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5" />
@@ -160,11 +162,11 @@ export const PriorityAdvisorModal: React.FC<PriorityAdvisorModalProps> = ({
             <div className="flex-1 overflow-y-auto px-6 py-6">
               {payables.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-20">
-                  <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                  <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                     <CheckCircle2 className="w-10 h-10" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black">All Clear!</h3>
+                    <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100">All Clear!</h3>
                     <p className="text-sm font-bold text-zinc-500 mt-2">You don't owe money on any active accounts.</p>
                   </div>
                 </div>
@@ -177,7 +179,7 @@ export const PriorityAdvisorModal: React.FC<PriorityAdvisorModalProps> = ({
                     const isTop = index === 0;
 
                     return (
-                      <div key={debt.id} className={`group relative p-5 rounded-3xl border transition-all ${isTop ? 'bg-zinc-900 border-amber-500/30' : 'bg-zinc-950 border-zinc-900'}`}>
+                      <div key={debt.id} className={`group relative p-5 rounded-3xl border transition-all ${isTop ? 'bg-amber-50/50 dark:bg-zinc-800/90 border-amber-300 dark:border-amber-500/30 shadow-sm' : 'bg-zinc-50 dark:bg-zinc-850 border-zinc-200 dark:border-zinc-800'}`}>
                         {isTop && (
                           <div className="absolute -top-3 left-6 px-3 py-1 bg-amber-400 text-zinc-950 text-[10px] font-black uppercase rounded-full shadow-lg">
                             Highest Priority
@@ -187,15 +189,15 @@ export const PriorityAdvisorModal: React.FC<PriorityAdvisorModalProps> = ({
                         <div className="flex justify-between items-start mb-4">
                           <div className="min-w-0 pr-4">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">#{index + 1} Target</span>
-                              <span className={`w-1.5 h-1.5 rounded-full ${isOverdue ? 'bg-rose-500' : 'bg-zinc-500'}`} />
+                              <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">#{index + 1} Target</span>
+                              <span className={`w-1.5 h-1.5 rounded-full ${isOverdue ? 'bg-rose-500' : 'bg-zinc-400'}`} />
                             </div>
-                            <h4 className="text-lg font-black truncate">{debt.contact.name}</h4>
+                            <h4 className="text-lg font-black truncate text-zinc-900 dark:text-zinc-100">{debt.contact.name}</h4>
                             <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest truncate">{debt.title || 'Personal Loan'}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-black text-white">{formatCurrency(balance, currency)}</p>
-                            <p className={`text-[10px] font-black uppercase ${isOverdue ? 'text-rose-500' : 'text-zinc-500'}`}>
+                            <p className="text-xl font-black text-zinc-900 dark:text-white">{formatCurrency(balance, currency)}</p>
+                            <p className={`text-[10px] font-black uppercase ${isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-500'}`}>
                               {isOverdue ? `${Math.abs(daysUntil)}d Overdue` : `${daysUntil}d Left`}
                             </p>
                           </div>
@@ -203,8 +205,8 @@ export const PriorityAdvisorModal: React.FC<PriorityAdvisorModalProps> = ({
 
                         {/* Analysis Note */}
                         {debt.priorityReason && (
-                          <div className="mb-4 p-3 bg-zinc-950/50 rounded-2xl border border-zinc-800/50">
-                            <p className="text-[11px] font-bold text-zinc-400 leading-relaxed italic">
+                          <div className="mb-4 p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                            <p className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 leading-relaxed italic">
                               "{debt.priorityReason}"
                             </p>
                           </div>
@@ -213,15 +215,15 @@ export const PriorityAdvisorModal: React.FC<PriorityAdvisorModalProps> = ({
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => { onClose(); onViewDetails(debt); }}
-                            className="flex-1 py-3 rounded-2xl bg-zinc-900 text-[10px] font-black uppercase tracking-widest border border-zinc-800 active:scale-95 transition-transform"
+                            className="flex-1 py-3 rounded-2xl bg-white dark:bg-zinc-800 text-[10px] font-black uppercase tracking-widest border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 active:scale-95 transition-transform cursor-pointer"
                           >
                             Analyze
                           </button>
                           <button
                             onClick={() => { onClose(); onRecordPayment(debt); }}
-                            className="flex-1 py-3 rounded-2xl bg-white text-zinc-950 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                            className="flex-1 py-3 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform cursor-pointer shadow-xs"
                           >
-                            <CreditCard className="w-3.5 h-3.5" /> Pay Now
+                            <CreditCard className="w-3.5 h-3.5" /> Settle
                           </button>
                         </div>
                       </div>
@@ -232,10 +234,10 @@ export const PriorityAdvisorModal: React.FC<PriorityAdvisorModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="p-6 bg-zinc-900 border-t border-zinc-800 shrink-0">
+            <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800 shrink-0">
               <button
                 onClick={onClose}
-                className="w-full py-4 rounded-2xl bg-zinc-800 text-white font-black active:scale-95 transition-transform"
+                className="w-full py-4 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 font-black active:scale-95 transition-transform cursor-pointer"
               >
                 Done
               </button>

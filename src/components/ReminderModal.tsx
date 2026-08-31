@@ -92,29 +92,29 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-[101] bg-zinc-950 text-white rounded-t-[32px] shadow-2xl overflow-hidden flex flex-col mx-auto max-w-[500px]"
+            className="fixed bottom-0 left-0 right-0 z-[101] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-t-[32px] shadow-2xl overflow-hidden flex flex-col mx-auto max-w-[500px] border border-zinc-200 dark:border-zinc-800"
           >
             {/* iOS Handle */}
             <div className="w-full flex justify-center pt-3 pb-1 shrink-0">
-              <div className="w-12 h-1.5 bg-zinc-800 rounded-full" />
+              <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
             </div>
 
             {/* Header */}
-            <div className="px-6 py-4 flex items-center justify-between border-b border-zinc-900 shrink-0">
+            <div className="px-6 py-4 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400">
+                <div className="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <MessageSquare className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black leading-tight">Reminder Generator</h2>
-                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                  <h2 className="text-lg font-black leading-tight text-zinc-900 dark:text-zinc-100">Reminder Generator</h2>
+                  <p className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
                     To {debt.contact.name} • {formatCurrency(debt.amount - debt.paidAmount, currency)}
                   </p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400"
+                className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -124,16 +124,16 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
               {/* Tone Selection */}
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block">Message Tone</label>
+                <label className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">Message Tone</label>
                 <div className="grid grid-cols-2 gap-2">
                   {(['friendly', 'business', 'milestone', 'urgent'] as Tone[]).map((t) => (
                     <button
                       key={t}
                       onClick={() => setTone(t)}
-                      className={`py-3 px-4 rounded-2xl border text-xs font-black capitalize transition-all active:scale-95 ${
+                      className={`py-3 px-4 rounded-2xl border text-xs font-black capitalize transition-all active:scale-95 cursor-pointer ${
                         tone === t
-                          ? 'bg-zinc-800 border-zinc-700 text-white shadow-lg'
-                          : 'bg-zinc-900 border-zinc-800 text-zinc-500'
+                          ? 'bg-zinc-900 dark:bg-zinc-100 border-zinc-900 dark:border-zinc-100 text-white dark:text-zinc-900 shadow-md'
+                          : 'bg-zinc-50 dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400'
                       }`}
                     >
                       {t}
@@ -144,12 +144,12 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
 
               {/* Message Box */}
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block">Message Preview</label>
+                <label className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">Message Preview</label>
                 <textarea
                   rows={6}
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
-                  className="w-full p-4 bg-zinc-900 border border-zinc-800 rounded-3xl text-sm font-bold text-zinc-300 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 resize-none leading-relaxed"
+                  className="w-full p-4 bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 rounded-3xl text-sm font-bold text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 resize-none leading-relaxed"
                 />
               </div>
 
@@ -157,31 +157,31 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={handleCopy}
-                  className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-zinc-900 border border-zinc-800 active:scale-95 transition-all group"
+                  className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 active:scale-95 transition-all group cursor-pointer"
                 >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${copied ? 'bg-emerald-500/10 text-emerald-400' : 'bg-zinc-800 text-zinc-400 group-active:bg-zinc-700'}`}>
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${copied ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 group-active:bg-zinc-200 dark:group-active:bg-zinc-600'}`}>
                     {copied ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Copy Message</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-800 dark:text-zinc-200">Copy Message</span>
                 </button>
 
                 <button
                   onClick={handleWhatsApp}
-                  className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-zinc-900 border border-zinc-800 active:scale-95 transition-all group"
+                  className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 active:scale-95 transition-all group cursor-pointer"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-active:bg-emerald-500/20">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-active:bg-emerald-500/20">
                     <Share2 className="w-6 h-6" />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Send WhatsApp</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-800 dark:text-zinc-200">Send WhatsApp</span>
                 </button>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="p-6 bg-zinc-900 border-t border-zinc-800 shrink-0">
+            <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800 shrink-0">
               <button
                 onClick={onClose}
-                className="w-full py-4 rounded-2xl bg-white text-zinc-950 font-bold shadow-lg active:scale-95 transition-transform"
+                className="w-full py-4 rounded-2xl bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 font-bold shadow-lg active:scale-95 transition-transform cursor-pointer"
               >
                 Done
               </button>
