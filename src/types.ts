@@ -19,7 +19,7 @@ export interface PaymentRecord {
 
 export interface ContactInfo {
   name: string;
-  email?: string;
+  ccpNumber?: string;
   phone?: string;
   company?: string;
   relationship?: string; // e.g., Friend, Client, Landlord, Supplier, Contractor, Sibling

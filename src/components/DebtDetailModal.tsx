@@ -26,7 +26,8 @@ import {
   CheckCircle2, 
   MessageSquare,
   ChevronRight,
-  Plus
+  Plus,
+  AtSign
 } from 'lucide-react';
 
 interface DebtDetailModalProps {
@@ -190,7 +191,7 @@ export const DebtDetailModal: React.FC<DebtDetailModalProps> = ({
               </div>
 
               {/* Contact Actions */}
-              {(debt.contact.phone || debt.contact.email || debt.contact.paymentDetails) && (
+              {(debt.contact.phone || debt.contact.ccpNumber || debt.contact.paymentDetails) && (
                 <div className="bg-white rounded-[24px] border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
                   {debt.contact.phone && (
                     <div className="px-5 py-4 flex items-center justify-between">
@@ -200,6 +201,20 @@ export const DebtDetailModal: React.FC<DebtDetailModalProps> = ({
                       </div>
                       <button onClick={() => copyText(debt.contact.phone!, 'phone')} className="text-zinc-400 active:text-zinc-900">
                         {copiedKey === 'phone' ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  )}
+                  {debt.contact.ccpNumber && (
+                    <div className="px-5 py-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <AtSign className="w-5 h-5 text-zinc-400" />
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">CCP Number</span>
+                          <span className="text-sm font-bold text-zinc-900">{debt.contact.ccpNumber}</span>
+                        </div>
+                      </div>
+                      <button onClick={() => copyText(debt.contact.ccpNumber!, 'ccp')} className="text-zinc-400 active:text-zinc-900">
+                        {copiedKey === 'ccp' ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5" />}
                       </button>
                     </div>
                   )}

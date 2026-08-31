@@ -27,7 +27,7 @@ export function DebtModal({ isOpen, onClose, onSave, editingDebt, currency, exis
   const [type, setType] = useState<DebtType>(DebtType.OWE_ME);
   const [contactName, setContactName] = useState('');
   const [contactInfo, setContactInfo] = useState('');
-  const [contactEmail, setContactEmail] = useState('');
+  const [ccpNumber, setCcpNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -41,7 +41,7 @@ export function DebtModal({ isOpen, onClose, onSave, editingDebt, currency, exis
       setType(editingDebt.direction === 'owed_to_me' ? DebtType.OWE_ME : DebtType.I_OWE);
       setContactName(editingDebt.contact.name);
       setContactInfo(editingDebt.contact.phone || '');
-      setContactEmail(editingDebt.contact.email || '');
+      setCcpNumber(editingDebt.contact.ccpNumber || '');
       setAmount(editingDebt.amount.toString());
       setDescription(editingDebt.title || '');
       setDueDate(editingDebt.dueDate || '');
@@ -52,7 +52,7 @@ export function DebtModal({ isOpen, onClose, onSave, editingDebt, currency, exis
       setType(DebtType.OWE_ME);
       setContactName('');
       setContactInfo('');
-      setContactEmail('');
+      setCcpNumber('');
       setAmount('');
       setDescription('');
       setDueDate('');
@@ -64,13 +64,13 @@ export function DebtModal({ isOpen, onClose, onSave, editingDebt, currency, exis
 
   // Derive unique contacts
   const contacts = useMemo(() => {
-    const map = new Map<string, { info: string; email: string }>();
+    const map = new Map<string, { info: string; ccp: string }>();
     existingDebts.forEach(d => {
       const lowerName = d.contact.name.toLowerCase();
       if (!map.has(lowerName)) {
         map.set(lowerName, {
           info: d.contact.phone || '',
-          email: d.contact.email || ''
+          ccp: d.contact.ccpNumber || ''
         });
       }
     });
@@ -102,7 +102,7 @@ export function DebtModal({ isOpen, onClose, onSave, editingDebt, currency, exis
       priority,
       contact: {
         name: contactName,
-        email: contactEmail,
+        ccpNumber: ccpNumber,
         phone: contactInfo,
       },
       notes: '',
@@ -186,13 +186,13 @@ export function DebtModal({ isOpen, onClose, onSave, editingDebt, currency, exis
                         onClick={() => {
                           setContactName(contact.name);
                           setContactInfo(contact.info);
-                          setContactEmail(contact.email);
+                          setCcpNumber(contact.ccp);
                           setShowSuggestions(false);
                         }}
                       >
                         <div className="flex flex-col">
                           <span className="font-bold text-zinc-900">{contact.name}</span>
-                          <span className="text-[10px] text-zinc-500 font-medium uppercase">{contact.info || contact.email || 'Saved contact'}</span>
+                          <span className="text-[10px] text-zinc-500 font-medium uppercase">{contact.info || contact.ccp || 'Saved contact'}</span>
                         </div>
                         <Plus className="w-4 h-4 text-emerald-500" />
                       </button>
@@ -218,14 +218,14 @@ export function DebtModal({ isOpen, onClose, onSave, editingDebt, currency, exis
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
                     <AtSign className="w-3.5 h-3.5" />
-                    Email
+                    CCP Number
                   </label>
                   <input
-                    type="email"
-                    placeholder="Email address"
+                    type="text"
+                    placeholder="000000000 / 00"
                     className="w-full px-5 py-4 bg-zinc-50 border border-zinc-200 rounded-[20px] focus:ring-2 focus:ring-zinc-900 outline-none text-sm font-bold"
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
+                    value={ccpNumber}
+                    onChange={(e) => setCcpNumber(e.target.value)}
                   />
                 </div>
               </div>
@@ -243,11 +243,11 @@ export function DebtModal({ isOpen, onClose, onSave, editingDebt, currency, exis
                     step="any"
                     required
                     placeholder="0.00"
-                    className="w-full pl-12 pr-5 py-5 bg-zinc-50 border border-zinc-200 rounded-[24px] focus:ring-2 focus:ring-zinc-900 outline-none text-2xl font-black"
+                    className="w-full pl-24 pr-5 py-5 bg-zinc-50 border border-zinc-200 rounded-[24px] focus:ring-2 focus:ring-zinc-900 outline-none text-2xl font-black"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                   />
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xl font-black text-zinc-300">{currency}</span>
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-lg font-black text-zinc-400">{currency}</span>
                 </div>
               </div>
 

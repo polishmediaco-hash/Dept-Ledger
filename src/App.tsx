@@ -178,7 +178,7 @@ export default function App() {
         const titleMatch = (debt.title || '').toLowerCase().includes(q);
         const notesMatch = (debt.notes || '').toLowerCase().includes(q);
         const tagsMatch = (debt.tags || []).some(t => t.toLowerCase().includes(q));
-        const emailPhoneMatch = (debt.contact.email || '').toLowerCase().includes(q) || (debt.contact.phone || '').includes(q);
+        const emailPhoneMatch = (debt.contact.ccpNumber || '').toLowerCase().includes(q) || (debt.contact.phone || '').includes(q);
         
         if (!nameMatch && !companyMatch && !titleMatch && !notesMatch && !tagsMatch && !emailPhoneMatch) {
           return false;
@@ -411,10 +411,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-start text-zinc-900 font-sans selection:bg-zinc-900 selection:text-white overflow-hidden">
+    <div className="min-h-[100dvh] w-full bg-zinc-50 flex flex-col font-sans selection:bg-zinc-900 selection:text-white">
       
-      {/* Main App Container - Full Screen with Safe Area Support */}
-      <div className="w-full h-full flex flex-col min-h-screen max-w-2xl mx-auto bg-zinc-50 relative pt-[env(safe-area-inset-top)]">
+      {/* Main App Container */}
+      <div className="w-full flex-1 flex flex-col max-w-md mx-auto bg-zinc-50 relative pt-[env(safe-area-inset-top)]">
         
         {/* iOS Navigation Header */}
         <header className="px-4 py-4 bg-white/90 backdrop-blur-md border-b border-zinc-200/70 flex items-center justify-between sticky top-0 z-30">
@@ -471,7 +471,7 @@ export default function App() {
         </header>
 
         {/* Scrollable iPhone Main Content Area */}
-        <main className="flex-1 overflow-y-auto px-3.5 py-3 space-y-3.5 pb-6">
+        <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-32">
           
           {/* 3 Core Primary Action Buttons: Add Debt, Settle Debt, Full Balance */}
           <IPhoneMainActions

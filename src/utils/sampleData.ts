@@ -28,7 +28,7 @@ export const INITIAL_SAMPLE_DEBTS: DebtItem[] = [
     contact: {
       name: 'Marcus Vance',
       company: 'Apex Media Studio',
-      email: 'm.vance@apexmediastudio.com',
+      ccpNumber: '0079999900',
       phone: '+213 550 23 48 90',
       relationship: 'Client',
       paymentDetails: 'CCP / RIP: 00799999002134567890 / BaridiMob'
@@ -64,7 +64,7 @@ export const INITIAL_SAMPLE_DEBTS: DebtItem[] = [
     contact: {
       name: 'Elena Rostova',
       company: 'TechCraft Solutions',
-      email: 'elena@techcraft.dev',
+      ccpNumber: '0012345678',
       phone: '+213 661 78 90 12',
       relationship: 'Supplier / Partner',
       paymentDetails: 'BaridiMob / Bank Wire: BNA 002000...'
@@ -99,7 +99,7 @@ export const INITIAL_SAMPLE_DEBTS: DebtItem[] = [
     priorityReason: 'Friendly reminder needed before end of month paycheck.',
     contact: {
       name: 'David Chen',
-      email: 'dchen.personal@gmail.com',
+      ccpNumber: '0011223344',
       phone: '+213 770 91 23 45',
       relationship: 'Close Friend',
       paymentDetails: 'BaridiMob / Cash'
@@ -126,7 +126,7 @@ export const INITIAL_SAMPLE_DEBTS: DebtItem[] = [
     contact: {
       name: 'Sofia Martinez',
       company: 'AppPulse QA',
-      email: 'sofia.qa@apppulse.io',
+      ccpNumber: '0099887766',
       phone: '+213 555 43 17 78',
       relationship: 'Contractor',
       paymentDetails: 'BaridiMob / CCP Direct'
@@ -152,7 +152,7 @@ export const INITIAL_SAMPLE_DEBTS: DebtItem[] = [
     priorityReason: 'Promised to repay in two 12,000 DZD installments by end of next month.',
     contact: {
       name: 'Uncle Robert Miller',
-      email: 'rmiller1965@yahoo.com',
+      ccpNumber: '0055443322',
       phone: '+213 540 34 56 78',
       relationship: 'Family (Uncle)',
       paymentDetails: 'Cash / BaridiMob'
@@ -187,7 +187,7 @@ export const INITIAL_SAMPLE_DEBTS: DebtItem[] = [
     priorityReason: 'Settled in full.',
     contact: {
       name: 'Sarah Jenkins',
-      email: 'sarah.j@outlook.com',
+      ccpNumber: '0033221100',
       phone: '+213 660 67 81 23',
       relationship: 'Friend / Colleague',
       paymentDetails: 'BaridiMob / Cash'
