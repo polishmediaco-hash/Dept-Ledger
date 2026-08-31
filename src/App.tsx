@@ -19,7 +19,6 @@ import { useFirebase } from './contexts/FirebaseContext';
 import { db, handleFirestoreError, OperationType, logout, testConnection } from './lib/firebase';
 import { doc, setDoc, addDoc, collection, deleteDoc, updateDoc } from 'firebase/firestore';
 import { AuthScreen } from './components/AuthScreen';
-import { IPhoneStatusBar } from './components/IPhoneStatusBar';
 import { IPhoneMainActions } from './components/IPhoneMainActions';
 import { IPhoneBottomBar } from './components/IPhoneBottomBar';
 import { FullBalanceSection } from './components/FullBalanceSection';
@@ -415,8 +414,6 @@ export default function App() {
       
       {/* Main App Container */}
       <div className="w-full flex-1 flex flex-col max-w-md mx-auto bg-zinc-50 relative overflow-hidden">
-        
-        <IPhoneStatusBar urgentCount={urgentCount} />
         
         {/* iOS Navigation Header */}
         <header className="px-4 py-4 bg-white/90 backdrop-blur-md border-b border-zinc-200/70 flex items-center justify-between sticky top-0 z-30 shrink-0">
