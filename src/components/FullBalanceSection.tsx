@@ -55,8 +55,6 @@ export const FullBalanceSection: React.FC<FullBalanceSectionProps> = ({
   const totalOwedToMeBusiness = owedToMeBusiness.reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
   const totalOwedToMe = totalOwedToMePersonal + totalOwedToMeBusiness;
 
-  const netBalance = totalOwedToMe - totalIOwe;
-
   // Aggregate by contact
   const contactAggregates = useMemo(() => {
     const map = new Map<string, {
@@ -104,64 +102,8 @@ export const FullBalanceSection: React.FC<FullBalanceSectionProps> = ({
     }));
   };
 
-  // Ratio bar calculation
-  const totalVolume = totalOwedToMe + totalIOwe;
-  const receivablePercent = totalVolume > 0 ? (totalOwedToMe / totalVolume) * 100 : 50;
-
   return (
     <div className="space-y-3 mb-6">
-      {/* Top Hero Net Position Card */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-4 shadow-2xs transition-colors">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <div>
-            <span className="text-[10px] uppercase font-semibold text-zinc-500 dark:text-zinc-400 tracking-wider block mb-0.5">
-              Net Financial Position
-            </span>
-            <div className={`text-2xl font-bold tabular-nums tracking-tight whitespace-nowrap ${
-              netBalance >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
-            }`}>
-              <span className="mr-1 font-semibold">{netBalance >= 0 ? '+' : '−'}</span>
-              <span>{formatCurrency(Math.abs(netBalance), currency)}</span>
-            </div>
-          </div>
-
-          <div className="text-right">
-            <span className={`inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-md ${
-              netBalance >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' : 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
-            }`}>
-              {netBalance >= 0 ? 'Surplus (+)' : 'Deficit (–)'}
-            </span>
-          </div>
-        </div>
-
-        {/* Balance Ratio Bar */}
-        <div className="space-y-2 pt-1 border-t border-zinc-100 dark:border-zinc-800">
-          <div className="w-full h-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 flex overflow-hidden">
-            <div 
-              className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
-              style={{ width: `${receivablePercent}%` }}
-            />
-            <div 
-              className="h-full bg-rose-500 rounded-full transition-all duration-500" 
-              style={{ width: `${100 - receivablePercent}%` }}
-            />
-          </div>
-
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-              <span className="text-zinc-500 dark:text-zinc-400 font-medium">Owed to You:</span>
-              <span className="font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{formatCurrency(totalOwedToMe, currency)}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-              <span className="text-zinc-500 dark:text-zinc-400 font-medium">You Owe:</span>
-              <span className="font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{formatCurrency(totalIOwe, currency)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main View Selector Tabs */}
       <div className="flex items-center bg-zinc-100/90 dark:bg-zinc-800/80 p-1 rounded-xl gap-1 border border-zinc-200/80 dark:border-zinc-700/80">
         <button

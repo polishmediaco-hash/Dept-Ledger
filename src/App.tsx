@@ -442,19 +442,32 @@ export default function App() {
         {/* Scrollable iPhone Main Content Area */}
         <main className="flex-1 overflow-y-auto px-4 py-3 space-y-3 pb-32 scroll-smooth">
           
-          {/* Top Slim Balance Summary Bar */}
-          <IPhoneMainActions
-            onOpenAddModal={() => {
-              setEditingDebt(null);
-              setIsDebtModalOpen(true);
-            }}
-            onOpenSettleModal={() => setIsSettleModalOpen(true)}
-            onOpenFullBalance={() => setActiveNavTab('balance')}
-            unsettledCount={activeDebts.length}
-            totalIOwe={totalIOwe}
-            totalOwedToMe={totalOwedToMe}
-            currency={currency}
-          />
+          {/* Top Slim Balance Summary Bar with smooth collapse on tab switch */}
+          <AnimatePresence initial={false}>
+            {activeNavTab === 'ledger' && (
+              <motion.div
+                key="net-standing-bar"
+                initial={{ opacity: 0, height: 0, scale: 0.98 }}
+                animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                exit={{ opacity: 0, height: 0, scale: 0.98 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                className="overflow-hidden"
+              >
+                <IPhoneMainActions
+                  onOpenAddModal={() => {
+                    setEditingDebt(null);
+                    setIsDebtModalOpen(true);
+                  }}
+                  onOpenSettleModal={() => setIsSettleModalOpen(true)}
+                  onOpenFullBalance={() => setActiveNavTab('balance')}
+                  unsettledCount={activeDebts.length}
+                  totalIOwe={totalIOwe}
+                  totalOwedToMe={totalOwedToMe}
+                  currency={currency}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* View Switcher based on activeNavTab */}
           {activeNavTab === 'history' ? (

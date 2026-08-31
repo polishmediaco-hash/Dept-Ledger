@@ -1,9 +1,18 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut, 
+  setPersistence, 
+  browserLocalPersistence,
+  inMemoryPersistence
+} from 'firebase/auth';
 import { 
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
+  memoryLocalCache,
   doc, 
   setDoc, 
   getDoc, 
@@ -20,15 +29,31 @@ import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-// Ensure persistence is set to local
-setPersistence(auth, browserLocalPersistence).catch(err => console.error('Persistence error:', err));
 
-export const db = initializeFirestore(app, {
-  experimentalAutoDetectLongPolling: true,
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager()
-  })
-}, firebaseConfig.firestoreDatabaseId || undefined);
+// Gracefully configure auth persistence with silent fallback
+setPersistence(auth, browserLocalPersistence).catch(() => {
+  setPersistence(auth, inMemoryPersistence).catch(() => {
+    // Silent fallback to standard memory state
+  });
+});
+
+let firestoreDb;
+try {
+  firestoreDb = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: true,
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+    })
+  }, firebaseConfig.firestoreDatabaseId || undefined);
+} catch (e) {
+  // If persistent cache fails due to environment / iframe IndexedDB restrictions, fallback to memory cache
+  firestoreDb = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: true,
+    localCache: memoryLocalCache()
+  }, firebaseConfig.firestoreDatabaseId || undefined);
+}
+
+export const db = firestoreDb;
 
 export const googleProvider = new GoogleAuthProvider();
 

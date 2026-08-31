@@ -56,47 +56,47 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   return (
     <header 
-      className={`px-4 pb-3 ${
+      className={`px-4 sm:px-6 py-3.5 ${
         isStandalone ? 'pt-[env(safe-area-inset-top,44px)]' : 'pt-3.5'
       } bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800 sticky top-0 z-30 shrink-0 transition-colors`}
     >
-      <div className="flex items-center justify-between gap-2">
-        {/* Left: Clean Brand Logo */}
-        <div className="flex items-center gap-2 min-w-0">
-          <AppLogo size="sm" />
-          <h1 className="text-sm font-black text-zinc-950 dark:text-zinc-100 tracking-[0.25em] leading-none font-mono uppercase select-none">
+      <div className="flex items-center justify-between gap-3">
+        {/* Left: Clean Brand Logo & Prominent Title */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <AppLogo size="md" />
+          <h1 className="text-base sm:text-lg font-black text-zinc-950 dark:text-zinc-100 tracking-[0.22em] leading-none font-mono uppercase select-none">
             LEDGER
           </h1>
         </div>
 
         {/* Right: Quick Action Controls */}
-        <div className="flex items-center gap-2 shrink-0" ref={menuRef}>
+        <div className="flex items-center gap-2.5 shrink-0" ref={menuRef}>
           {/* Quick Theme Toggle Button */}
           <button
             id="theme-toggle-btn"
             onClick={onToggleDarkMode}
-            className="h-7 w-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-95 transition-all cursor-pointer shadow-2xs"
+            className="h-9 w-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-95 transition-all cursor-pointer shadow-2xs"
             title={isDarkMode ? 'Switch to Light mode' : 'Switch to Night mode'}
             aria-label="Toggle Night Mode"
           >
             {isDarkMode ? (
-              <Sun className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+              <Sun className="w-4.5 h-4.5 text-amber-400 fill-amber-400" />
             ) : (
-              <Moon className="w-3.5 h-3.5 text-zinc-700" />
+              <Moon className="w-4.5 h-4.5 text-zinc-700" />
             )}
           </button>
 
           {/* User Profile Avatar / Menu Trigger */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="relative h-7 w-7 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center font-bold text-xs shadow-2xs border border-zinc-800 dark:border-zinc-200 hover:bg-zinc-800 dark:hover:bg-zinc-200 active:scale-95 transition-all cursor-pointer"
+            className="relative h-9 w-9 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center font-bold text-sm shadow-2xs border border-zinc-800 dark:border-zinc-200 hover:bg-zinc-800 dark:hover:bg-zinc-200 active:scale-95 transition-all cursor-pointer"
             title="Account & Settings"
           >
             {user.photoURL ? (
               <img
                 src={user.photoURL}
                 alt="Profile"
-                className="w-full h-full rounded-lg object-cover"
+                className="w-full h-full rounded-xl object-cover"
                 referrerPolicy="no-referrer"
               />
             ) : (
@@ -106,7 +106,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
           {/* User Account Popover Dropdown */}
           {isMenuOpen && (
-            <div className="absolute right-0 top-11 w-64 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150 text-zinc-900 dark:text-zinc-100">
+            <div className="absolute right-0 top-12 w-68 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl p-3.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-zinc-900 dark:text-zinc-100">
               {/* Account header */}
               <div className="flex items-center gap-2.5 pb-2.5 border-b border-zinc-100 dark:border-zinc-800">
                 <div className="h-9 w-9 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center font-bold text-sm shrink-0">
