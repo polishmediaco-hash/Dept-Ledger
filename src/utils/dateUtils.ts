@@ -1,25 +1,43 @@
 import { DebtItem, DebtStatus, PriorityLevel } from '../types';
 
+// Memoized today date string cache to eliminate thousands of repeated Date allocations
+let cachedTodayString = '';
+let cachedTodayTimestamp = 0;
+
+export function getTodayString(): string {
+  const now = Date.now();
+  // Refresh cache every 60 seconds
+  if (!cachedTodayString || now - cachedTodayTimestamp > 60000) {
+    const d = new Date(now);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    cachedTodayString = `${year}-${month}-${day}`;
+    cachedTodayTimestamp = now;
+  }
+  return cachedTodayString;
+}
+
+// Fast Days difference lookup cache
+const diffCache = new Map<string, number>();
+
 /**
  * Calculates days between two date strings (YYYY-MM-DD)
  */
 export function getDaysDifference(fromDateStr: string, toDateStr: string): number {
   if (!fromDateStr || !toDateStr) return 0;
+  const key = `${fromDateStr}_${toDateStr}`;
+  const cached = diffCache.get(key);
+  if (cached !== undefined) return cached;
+
   const from = new Date(fromDateStr + 'T00:00:00');
   const to = new Date(toDateStr + 'T00:00:00');
   const diffTime = to.getTime() - from.getTime();
-  return Math.round(diffTime / (1000 * 60 * 60 * 24));
-}
+  const days = Math.round(diffTime / 86400000); // 1000 * 60 * 60 * 24
 
-/**
- * Get current date formatted as YYYY-MM-DD in local time
- */
-export function getTodayString(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  if (diffCache.size > 1000) diffCache.clear();
+  diffCache.set(key, days);
+  return days;
 }
 
 /**

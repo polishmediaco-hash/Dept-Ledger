@@ -2,10 +2,7 @@ import React from 'react';
 import { formatCurrency } from '../utils/dateUtils';
 
 interface IPhoneMainActionsProps {
-  onOpenAddModal: () => void;
-  onOpenSettleModal: () => void;
   onOpenFullBalance: () => void;
-  unsettledCount: number;
   totalIOwe: number;
   totalOwedToMe: number;
   currency: string;

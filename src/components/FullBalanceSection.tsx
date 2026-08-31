@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { DebtItem } from '../types';
+import { DebtItem, TransactionType } from '../types';
 import { formatCurrency, formatDeadlineStatus } from '../utils/dateUtils';
 import { BalanceMonthlyChart } from './BalanceMonthlyChart';
 import { BalanceCalendarView } from './BalanceCalendarView';
@@ -10,8 +10,8 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
-  Columns,
-  Plus
+  Plus,
+  MinusCircle
 } from 'lucide-react';
 
 interface FullBalanceSectionProps {
@@ -20,6 +20,7 @@ interface FullBalanceSectionProps {
   onQuickSettle: (debt: DebtItem) => void;
   onSelectDebt: (debt: DebtItem) => void;
   onOpenAddModal: () => void;
+  onRecordPayment?: (debt: DebtItem, mode?: TransactionType) => void;
 }
 
 export const FullBalanceSection: React.FC<FullBalanceSectionProps> = ({
@@ -28,32 +29,15 @@ export const FullBalanceSection: React.FC<FullBalanceSectionProps> = ({
   onQuickSettle,
   onSelectDebt,
   onOpenAddModal,
+  onRecordPayment,
 }) => {
-  const [activeTab, setActiveTab] = useState<'cashflow' | 'calendar' | 'contacts' | 'columns'>('cashflow');
+  const [activeTab, setActiveTab] = useState<'contacts' | 'cashflow' | 'calendar'>('contacts');
   const [contactSearch, setContactSearch] = useState('');
   const [expandedContacts, setExpandedContacts] = useState<Record<string, boolean>>({});
 
   const activeDebts = useMemo(() => {
     return debts.filter(d => (d.amount - d.paidAmount) > 0.001);
   }, [debts]);
-
-  // Column 1: I Owe (Payables)
-  const iOweDebts = activeDebts.filter(d => d.direction === 'i_owe');
-  const iOwePersonal = iOweDebts.filter(d => d.category === 'personal');
-  const iOweBusiness = iOweDebts.filter(d => d.category === 'business');
-
-  const totalIOwePersonal = iOwePersonal.reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
-  const totalIOweBusiness = iOweBusiness.reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
-  const totalIOwe = totalIOwePersonal + totalIOweBusiness;
-
-  // Column 2: Owed to Me (Receivables)
-  const owedToMeDebts = activeDebts.filter(d => d.direction === 'owed_to_me');
-  const owedToMePersonal = owedToMeDebts.filter(d => d.category === 'personal');
-  const owedToMeBusiness = owedToMeDebts.filter(d => d.category === 'business');
-
-  const totalOwedToMePersonal = owedToMePersonal.reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
-  const totalOwedToMeBusiness = owedToMeBusiness.reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
-  const totalOwedToMe = totalOwedToMePersonal + totalOwedToMeBusiness;
 
   // Aggregate by contact
   const contactAggregates = useMemo(() => {
@@ -104,8 +88,20 @@ export const FullBalanceSection: React.FC<FullBalanceSectionProps> = ({
 
   return (
     <div className="space-y-3 mb-6">
-      {/* Main View Selector Tabs */}
+      {/* Main View Selector Tabs (3 clear distinct analysis views) */}
       <div className="flex items-center bg-zinc-100/90 dark:bg-zinc-800/80 p-1 rounded-xl gap-1 border border-zinc-200/80 dark:border-zinc-700/80">
+        <button
+          onClick={() => setActiveTab('contacts')}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            activeTab === 'contacts'
+              ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-2xs'
+              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span>By Person ({contactAggregates.length})</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('cashflow')}
           className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
@@ -127,53 +123,11 @@ export const FullBalanceSection: React.FC<FullBalanceSectionProps> = ({
           }`}
         >
           <Calendar className="w-3.5 h-3.5" />
-          <span>Calendar</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('contacts')}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeTab === 'contacts'
-              ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-2xs'
-              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
-          }`}
-        >
-          <Users className="w-3.5 h-3.5" />
-          <span>By Person</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('columns')}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeTab === 'columns'
-              ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-2xs'
-              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
-          }`}
-        >
-          <Columns className="w-3.5 h-3.5" />
-          <span>Columns</span>
+          <span>Due Dates</span>
         </button>
       </div>
 
-      {/* Tab 1: Monthly Cashflow */}
-      {activeTab === 'cashflow' && (
-        <BalanceMonthlyChart 
-          debts={activeDebts} 
-          currency={currency} 
-        />
-      )}
-
-      {/* Tab 2: Due Date Calendar View */}
-      {activeTab === 'calendar' && (
-        <BalanceCalendarView
-          debts={activeDebts}
-          currency={currency}
-          onSelectDebt={onSelectDebt}
-          onQuickSettle={onQuickSettle}
-        />
-      )}
-
-      {/* Tab 3: Aggregated By Contact */}
+      {/* Tab 1: Aggregated By Contact (Default & Primary) */}
       {activeTab === 'contacts' && (
         <div className="space-y-3">
           {/* Contact Search Input */}
@@ -181,7 +135,7 @@ export const FullBalanceSection: React.FC<FullBalanceSectionProps> = ({
             <Search className="w-4 h-4 text-zinc-400 dark:text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search contact by name..."
+              placeholder="Search by contact name..."
               value={contactSearch}
               onChange={(e) => setContactSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 font-medium"
@@ -271,20 +225,29 @@ export const FullBalanceSection: React.FC<FullBalanceSectionProps> = ({
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2.5 shrink-0">
-                                <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100 tabular-nums">
+                              <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                <span className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 tabular-nums mr-1">
                                   {formatCurrency(remaining, currency)}
                                 </span>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onQuickSettle(d);
-                                  }}
-                                  className="py-1.5 px-3 bg-zinc-900 dark:bg-zinc-100 active:bg-zinc-800 dark:active:bg-zinc-200 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-900 font-semibold rounded-lg text-[11px] flex items-center gap-1 transition-all active:scale-95 shadow-2xs cursor-pointer"
-                                >
-                                  <Plus className="w-3 h-3 text-zinc-300 dark:text-zinc-700" />
-                                  <span>Settle</span>
-                                </button>
+                                {onRecordPayment && (
+                                  <>
+                                    <button
+                                      onClick={() => onRecordPayment(d, 'add')}
+                                      title="Add to debt"
+                                      className="py-1 px-2.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg text-[11px] font-semibold border border-zinc-200/80 dark:border-zinc-700 transition-all active:scale-95 cursor-pointer flex items-center gap-1"
+                                    >
+                                      <Plus className="w-3 h-3 text-zinc-400" />
+                                      <span>Add</span>
+                                    </button>
+                                    <button
+                                      onClick={() => onRecordPayment(d, 'subtract')}
+                                      title="Record payment"
+                                      className="py-1 px-3 bg-zinc-950 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-white dark:text-zinc-900 rounded-lg text-[11px] font-bold transition-all active:scale-95 shadow-2xs cursor-pointer flex items-center gap-1"
+                                    >
+                                      <span>Pay</span>
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </div>
                           );
@@ -299,105 +262,22 @@ export const FullBalanceSection: React.FC<FullBalanceSectionProps> = ({
         </div>
       )}
 
-      {/* Tab 4: Side-by-Side Overview Columns */}
-      {activeTab === 'columns' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Owed to Me (Receivables) */}
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-4 shadow-2xs space-y-3">
-            <div className="flex items-center justify-between pb-2.5 border-b border-zinc-100 dark:border-zinc-800">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
-                  Owed to You
-                </h3>
-              </div>
-              <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
-                {formatCurrency(totalOwedToMe, currency)}
-              </span>
-            </div>
+      {/* Tab 2: Monthly Cashflow */}
+      {activeTab === 'cashflow' && (
+        <BalanceMonthlyChart 
+          debts={activeDebts} 
+          currency={currency} 
+        />
+      )}
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-zinc-50 dark:bg-zinc-800/60 p-2.5 rounded-xl border border-zinc-200/70 dark:border-zinc-700/70">
-                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium block">Personal</span>
-                <span className="font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{formatCurrency(totalOwedToMePersonal, currency)}</span>
-              </div>
-              <div className="bg-zinc-50 dark:bg-zinc-800/60 p-2.5 rounded-xl border border-zinc-200/70 dark:border-zinc-700/70">
-                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium block">Business</span>
-                <span className="font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{formatCurrency(totalOwedToMeBusiness, currency)}</span>
-              </div>
-            </div>
-
-            <div className="space-y-1.5 max-h-60 overflow-y-auto pr-0.5">
-              {owedToMeDebts.length === 0 ? (
-                <div className="text-center py-6 text-xs text-zinc-400 dark:text-zinc-500">No active receivables.</div>
-              ) : (
-                owedToMeDebts.map(d => (
-                  <div
-                    key={d.id}
-                    onClick={() => onSelectDebt(d)}
-                    className="bg-zinc-50/70 dark:bg-zinc-800/50 p-2.5 rounded-xl border border-zinc-200/70 dark:border-zinc-700/70 flex items-center justify-between text-xs cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <div className="min-w-0 pr-2">
-                      <div className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{d.contact.name}</div>
-                      <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{d.title || 'Personal'}</div>
-                    </div>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100 tabular-nums shrink-0">
-                      {formatCurrency(d.amount - d.paidAmount, currency)}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* You Owe (Payables) */}
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-2xl p-4 shadow-2xs space-y-3">
-            <div className="flex items-center justify-between pb-2.5 border-b border-zinc-100 dark:border-zinc-800">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
-                <h3 className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
-                  You Owe
-                </h3>
-              </div>
-              <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
-                {formatCurrency(totalIOwe, currency)}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-zinc-50 dark:bg-zinc-800/60 p-2.5 rounded-xl border border-zinc-200/70 dark:border-zinc-700/70">
-                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium block">Personal</span>
-                <span className="font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{formatCurrency(totalIOwePersonal, currency)}</span>
-              </div>
-              <div className="bg-zinc-50 dark:bg-zinc-800/60 p-2.5 rounded-xl border border-zinc-200/70 dark:border-zinc-700/70">
-                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium block">Business</span>
-                <span className="font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{formatCurrency(totalIOweBusiness, currency)}</span>
-              </div>
-            </div>
-
-            <div className="space-y-1.5 max-h-60 overflow-y-auto pr-0.5">
-              {iOweDebts.length === 0 ? (
-                <div className="text-center py-6 text-xs text-zinc-400 dark:text-zinc-500">No active payables.</div>
-              ) : (
-                iOweDebts.map(d => (
-                  <div
-                    key={d.id}
-                    onClick={() => onSelectDebt(d)}
-                    className="bg-zinc-50/70 dark:bg-zinc-800/50 p-2.5 rounded-xl border border-zinc-200/70 dark:border-zinc-700/70 flex items-center justify-between text-xs cursor-pointer hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <div className="min-w-0 pr-2">
-                      <div className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{d.contact.name}</div>
-                      <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{d.title || 'Personal'}</div>
-                    </div>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100 tabular-nums shrink-0">
-                      {formatCurrency(d.amount - d.paidAmount, currency)}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+      {/* Tab 3: Due Date Calendar View */}
+      {activeTab === 'calendar' && (
+        <BalanceCalendarView
+          debts={activeDebts}
+          currency={currency}
+          onSelectDebt={onSelectDebt}
+          onQuickSettle={onQuickSettle}
+        />
       )}
     </div>
   );

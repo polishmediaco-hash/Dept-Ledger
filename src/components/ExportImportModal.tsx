@@ -60,7 +60,7 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150]"
           />
 
           <motion.div
@@ -68,7 +68,7 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-[101] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-t-[32px] shadow-2xl overflow-hidden flex flex-col mx-auto max-w-[500px] border border-zinc-200 dark:border-zinc-800"
+            className="fixed bottom-0 left-0 right-0 z-[151] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-t-[32px] shadow-2xl overflow-hidden flex flex-col mx-auto max-w-[500px] border border-zinc-200 dark:border-zinc-800"
           >
             {/* iOS Handle */}
             <div className="w-full flex justify-center pt-3 pb-1 shrink-0">

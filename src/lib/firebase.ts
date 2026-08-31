@@ -9,10 +9,12 @@ import {
   inMemoryPersistence
 } from 'firebase/auth';
 import { 
+  getFirestore,
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
   memoryLocalCache,
+  setLogLevel,
   doc, 
   setDoc, 
   getDoc, 
@@ -27,6 +29,9 @@ import {
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
+// Silence non-fatal Firestore network status and offline retry warnings
+setLogLevel('error');
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
@@ -38,19 +43,26 @@ setPersistence(auth, browserLocalPersistence).catch(() => {
 });
 
 let firestoreDb;
+const customDbId = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' 
+  ? firebaseConfig.firestoreDatabaseId 
+  : undefined;
+
 try {
-  firestoreDb = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true,
-    localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager()
-    })
-  }, firebaseConfig.firestoreDatabaseId || undefined);
+  firestoreDb = customDbId ? getFirestore(app, customDbId) : getFirestore(app);
 } catch (e) {
-  // If persistent cache fails due to environment / iframe IndexedDB restrictions, fallback to memory cache
-  firestoreDb = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true,
-    localCache: memoryLocalCache()
-  }, firebaseConfig.firestoreDatabaseId || undefined);
+  try {
+    firestoreDb = initializeFirestore(
+      app, 
+      {
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager()
+        })
+      }, 
+      customDbId
+    );
+  } catch (err) {
+    firestoreDb = customDbId ? getFirestore(app, customDbId) : getFirestore(app);
+  }
 }
 
 export const db = firestoreDb;

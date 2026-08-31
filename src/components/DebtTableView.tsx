@@ -1,5 +1,5 @@
 import React from 'react';
-import { DebtItem } from '../types';
+import { DebtItem, TransactionType } from '../types';
 import { 
   formatCurrency, 
   formatDate, 
@@ -9,25 +9,24 @@ import {
 import { 
   User, 
   Briefcase, 
-  MessageSquare, 
   Edit3, 
   Trash2, 
-  CheckCircle2,
-  Check,
-  RotateCcw,
-  CreditCard,
-  ExternalLink
+  CheckCircle2, 
+  Check, 
+  RotateCcw, 
+  CreditCard, 
+  Plus,
+  ExternalLink 
 } from 'lucide-react';
 
 interface DebtTableViewProps {
   debts: DebtItem[];
   currency: string;
-  onRecordPayment: (debt: DebtItem) => void;
+  onRecordPayment: (debt: DebtItem, mode?: TransactionType) => void;
   onViewDetails: (debt: DebtItem) => void;
   onEditDebt: (debt: DebtItem) => void;
   onDeleteDebt: (debtId: string) => void;
   onQuickSettle: (debt: DebtItem) => void;
-  onOpenReminder: (debt: DebtItem) => void;
 }
 
 export const DebtTableView: React.FC<DebtTableViewProps> = ({
@@ -38,7 +37,6 @@ export const DebtTableView: React.FC<DebtTableViewProps> = ({
   onEditDebt,
   onDeleteDebt,
   onQuickSettle,
-  onOpenReminder,
 }) => {
   if (debts.length === 0) {
     return null;
@@ -172,31 +170,29 @@ export const DebtTableView: React.FC<DebtTableViewProps> = ({
 
                   {/* Actions */}
                   <td className="py-3 px-4 text-right whitespace-nowrap">
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        onClick={() => onRecordPayment(debt, 'add')}
+                        title="Add to debt"
+                        className="p-1.5 rounded-lg text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer border border-zinc-200/80 dark:border-zinc-700"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+                      </button>
+
                       {!isSettled && (
                         <button
-                          onClick={() => onRecordPayment(debt)}
+                          onClick={() => onRecordPayment(debt, 'subtract')}
                           title="Record payment"
-                          className="p-1.5 rounded text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                          className="p-1.5 rounded-lg text-white dark:text-zinc-900 bg-zinc-950 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white transition-colors cursor-pointer shadow-2xs"
                         >
-                          <CreditCard className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                        </button>
-                      )}
-
-                      {isOwedToMe && !isSettled && (
-                        <button
-                          onClick={() => onOpenReminder(debt)}
-                          title="Generate payment reminder"
-                          className="p-1.5 rounded text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-200 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
+                          <CreditCard className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-700" />
                         </button>
                       )}
 
                       <button
                         onClick={() => onViewDetails(debt)}
                         title="View details"
-                        className="p-1.5 rounded text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                       </button>
@@ -204,7 +200,7 @@ export const DebtTableView: React.FC<DebtTableViewProps> = ({
                       <button
                         onClick={() => onEditDebt(debt)}
                         title="Edit record"
-                        className="p-1.5 rounded text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
@@ -212,7 +208,7 @@ export const DebtTableView: React.FC<DebtTableViewProps> = ({
                       <button
                         onClick={() => onQuickSettle(debt)}
                         title={isSettled ? 'Reopen' : 'Mark as settled'}
-                        className="p-1.5 rounded text-zinc-600 dark:text-zinc-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
                       </button>
@@ -220,7 +216,7 @@ export const DebtTableView: React.FC<DebtTableViewProps> = ({
                       <button
                         onClick={() => onDeleteDebt(debt.id)}
                         title="Delete"
-                        className="p-1.5 rounded text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

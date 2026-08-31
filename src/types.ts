@@ -8,12 +8,15 @@ export enum DebtType {
   I_OWE = 'I_OWE'
 }
 
+export type TransactionType = 'subtract' | 'add';
+
 export interface PaymentRecord {
   id: string;
   amount: number;
+  type?: TransactionType; // 'subtract' = repayment (reduces debt), 'add' = lent/borrowed more (increases debt)
   date: string; // YYYY-MM-DD
   note?: string;
-  paymentMethod?: string; // e.g. Zelle, Cash, Bank Transfer, PayPal, Venmo, Check
+  paymentMethod?: string; // e.g. Cash, BaridiMob, CCP, Bank Transfer, Zelle, PayPal
   createdAt: string;
 }
 

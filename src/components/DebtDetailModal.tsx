@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { DebtItem } from '../types';
+import { DebtItem, TransactionType } from '../types';
 import { 
   formatCurrency, 
   formatDate, 
   formatDurationElapsed, 
-  formatDeadlineStatus,
+  formatDeadlineStatus, 
 } from '../utils/dateUtils';
 import { motion, AnimatePresence } from 'motion/react';
+import confetti from 'canvas-confetti';
+import { ConfirmModal } from './ConfirmModal';
 import { 
   X, 
   User, 
@@ -21,8 +23,10 @@ import {
   Edit3, 
   Trash2, 
   CheckCircle2, 
-  MessageSquare, 
-  Plus
+  Plus,
+  MinusCircle,
+  PlusCircle,
+  RotateCcw
 } from 'lucide-react';
 
 interface DebtDetailModalProps {
@@ -30,11 +34,10 @@ interface DebtDetailModalProps {
   onClose: () => void;
   debt: DebtItem | null;
   currency: string;
-  onRecordPayment: (debt: DebtItem) => void;
+  onRecordPayment: (debt: DebtItem, mode?: TransactionType) => void;
   onEditDebt: (debt: DebtItem) => void;
   onDeleteDebt: (debtId: string) => void;
   onQuickSettle: (debt: DebtItem) => void;
-  onOpenReminder: (debt: DebtItem) => void;
   onDeletePaymentRecord: (debtId: string, paymentId: string) => void;
 }
 
@@ -47,10 +50,12 @@ export const DebtDetailModal: React.FC<DebtDetailModalProps> = ({
   onEditDebt,
   onDeleteDebt,
   onQuickSettle,
-  onOpenReminder,
   onDeletePaymentRecord,
 }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [isConfirmDeleteDebtOpen, setIsConfirmDeleteDebtOpen] = useState(false);
+  const [pendingDeletePayment, setPendingDeletePayment] = useState<{ id: string; amount: number } | null>(null);
+  const [isSettlingAction, setIsSettlingAction] = useState(false);
 
   if (!debt) return null;
 
@@ -67,17 +72,35 @@ export const DebtDetailModal: React.FC<DebtDetailModalProps> = ({
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
+  const handleSettleClick = () => {
+    setIsSettlingAction(true);
+    if (!isSettled) {
+      try {
+        confetti({
+          particleCount: 75,
+          spread: 65,
+          origin: { y: 0.65 }
+        });
+      } catch (e) {
+        // ignore
+      }
+    }
+    onQuickSettle(debt);
+    setTimeout(() => setIsSettlingAction(false), 500);
+  };
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
-          />
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+            />
 
           <motion.div
             initial={{ y: "100%" }}
@@ -227,80 +250,124 @@ export const DebtDetailModal: React.FC<DebtDetailModalProps> = ({
                 </div>
               )}
 
-              {/* Payments History */}
+              {/* Payments & Adjustments History */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[11px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Transaction History</h4>
-                  {!isSettled && (
-                    <button onClick={() => onRecordPayment(debt)} className="flex items-center gap-1 text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-1 rounded-lg uppercase tracking-widest cursor-pointer">
-                      <Plus className="w-3 h-3" /> Add
-                    </button>
-                  )}
+                  <h4 className="text-[11px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+                    Transaction History ({debt.payments ? debt.payments.length : 0})
+                  </h4>
+                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
+                    Chronological Ledger
+                  </span>
                 </div>
+
                 {debt.payments && debt.payments.length > 0 ? (
                   <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden">
-                    {debt.payments.map((p) => (
-                      <div key={p.id} className="px-5 py-4 flex items-center justify-between">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">+{formatCurrency(p.amount, currency)}</span>
-                          <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">{formatDate(p.date)} &bull; {p.paymentMethod}</span>
+                    {debt.payments.map((p) => {
+                      const isAddition = p.type === 'add';
+                      return (
+                        <div key={p.id} className="px-4 py-3 flex items-center justify-between gap-3 hover:bg-zinc-50/50 dark:hover:bg-zinc-850/50 transition-colors">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className={`mt-0.5 w-6 h-6 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${
+                              isAddition 
+                                ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900' 
+                                : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900'
+                            }`}>
+                              {isAddition ? '+' : '−'}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs font-bold ${
+                                  isAddition ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300'
+                                }`}>
+                                  {isAddition 
+                                    ? (isOwedToMe ? 'Lent More (+)' : 'Borrowed More (+)')
+                                    : (isOwedToMe ? 'Payment Received (−)' : 'Payment Made (−)')
+                                  }
+                                </span>
+                                <span className="text-xs font-black text-zinc-900 dark:text-zinc-100 tabular-nums">
+                                  {isAddition ? '+' : '−'}{formatCurrency(p.amount, currency)}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
+                                <span>{formatDate(p.date)}</span>
+                                {p.paymentMethod && <span>&bull; {p.paymentMethod}</span>}
+                                {p.note && <span className="italic truncate max-w-[140px]">&bull; "{p.note}"</span>}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <button 
+                            onClick={() => setPendingDeletePayment({ id: p.id, amount: p.amount })} 
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-zinc-300 dark:text-zinc-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 cursor-pointer transition-all shrink-0"
+                            title="Delete transaction"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                        <button onClick={() => onDeletePaymentRecord(debt.id, p.id)} className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-300 dark:text-zinc-600 hover:text-rose-500 cursor-pointer transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
-                  <div className="bg-white dark:bg-zinc-900 rounded-[24px] border-2 border-dashed border-zinc-100 dark:border-zinc-800 p-8 text-center">
-                    <p className="text-xs font-bold text-zinc-300 dark:text-zinc-600">No payments recorded yet</p>
+                  <div className="bg-white dark:bg-zinc-900 rounded-[24px] border-2 border-dashed border-zinc-100 dark:border-zinc-800 p-6 text-center">
+                    <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500">No transactions or payments logged yet</p>
+                    <p className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-1">Use the buttons above to log loan top-ups (+) or payments (−)</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Footer Floating Actions */}
-            <div className="p-6 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-3 shrink-0">
-              {!isSettled && (
+            <div className="p-4 sm:p-5 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-2.5 shrink-0">
+              <div className="flex gap-2">
                 <button
-                  onClick={() => onRecordPayment(debt)}
-                  className="w-full py-4 rounded-2xl bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold shadow-lg shadow-zinc-950/20 active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={() => onRecordPayment(debt, 'add')}
+                  className="flex-1 py-3 px-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <Plus className="w-5 h-5 text-emerald-400 dark:text-emerald-600" />
-                  Record Settlement
+                  <Plus className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                  <span>Add Debt</span>
                 </button>
-              )}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => onQuickSettle(debt)}
-                  className={`flex-1 py-4 rounded-2xl font-bold active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer ${
-                    isSettled 
-                      ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400' 
-                      : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/60'
-                  }`}
-                >
-                  <CheckCircle2 className="w-5 h-5" />
-                  {isSettled ? 'Re-open' : 'Full Settle'}
-                </button>
-                {isOwedToMe && !isSettled && (
+                
+                {!isSettled && (
                   <button
-                    onClick={() => onOpenReminder(debt)}
-                    className="flex-1 py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold active:scale-95 transition-transform flex items-center justify-center gap-2 cursor-pointer"
+                    onClick={() => onRecordPayment(debt, 'subtract')}
+                    className="flex-1 py-3 px-3 rounded-2xl bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white font-bold text-xs shadow-md shadow-zinc-950/10 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <MessageSquare className="w-5 h-5" />
-                    Remind
+                    <CreditCard className="w-4 h-4 text-zinc-300 dark:text-zinc-700" />
+                    <span>Record Payment</span>
                   </button>
                 )}
+              </div>
+
+              <div className="flex gap-2">
                 <button
-                  onClick={() => {
-                    if (confirm('Delete this entire record?')) {
-                      onDeleteDebt(debt.id);
-                      onClose();
-                    }
-                  }}
-                  className="w-14 py-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
+                  onClick={handleSettleClick}
+                  disabled={isSettlingAction}
+                  className={`flex-1 py-3 rounded-2xl font-bold text-xs active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    isSettled 
+                      ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700' 
+                      : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60'
+                  }`}
                 >
-                  <Trash2 className="w-5 h-5" />
+                  {isSettled ? (
+                    <>
+                      <RotateCcw className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                      <span>Re-open Debt</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span>{isSettlingAction ? 'Settling...' : 'Settle in Full'}</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setIsConfirmDeleteDebtOpen(true)}
+                  className="w-11 py-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 flex items-center justify-center active:scale-95 transition-all cursor-pointer border border-zinc-200/80 dark:border-zinc-700"
+                  title="Delete record"
+                >
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -308,5 +375,47 @@ export const DebtDetailModal: React.FC<DebtDetailModalProps> = ({
         </>
       )}
     </AnimatePresence>
+
+    {/* Confirmation Modal for Entire Debt Record */}
+    <ConfirmModal
+      isOpen={isConfirmDeleteDebtOpen}
+      onClose={() => setIsConfirmDeleteDebtOpen(false)}
+      onConfirm={() => {
+        onDeleteDebt(debt.id);
+        onClose();
+      }}
+      title="Delete Entire Debt Record?"
+      description="Are you sure you want to delete this record? This action cannot be undone and will permanently remove this record along with its entire payment history."
+      confirmText="Yes, Delete Record"
+      cancelText="Keep Record"
+      variant="danger"
+      itemDetails={{
+        name: debt.contact.name,
+        amount: formatCurrency(debt.amount, currency),
+        category: debt.category
+      }}
+    />
+
+    {/* Confirmation Modal for Individual Transaction Record */}
+    <ConfirmModal
+      isOpen={!!pendingDeletePayment}
+      onClose={() => setPendingDeletePayment(null)}
+      onConfirm={() => {
+        if (pendingDeletePayment) {
+          onDeletePaymentRecord(debt.id, pendingDeletePayment.id);
+          setPendingDeletePayment(null);
+        }
+      }}
+      title="Delete Transaction Entry?"
+      description="Are you sure you want to remove this transaction entry from the ledger? The balance will recalculate automatically."
+      confirmText="Delete Entry"
+      cancelText="Cancel"
+      variant="danger"
+      itemDetails={pendingDeletePayment ? {
+        name: debt.contact.name,
+        amount: formatCurrency(pendingDeletePayment.amount, currency),
+      } : undefined}
+    />
+    </>
   );
 };

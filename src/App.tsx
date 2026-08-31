@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   DebtItem, 
+  TransactionType,
   TabFilter, 
   CategoryFilter, 
   PriorityFilter, 
@@ -14,6 +15,7 @@ import {
   getDaysElapsed, 
   getPriorityScore, 
   getDebtStatus,
+  formatCurrency,
 } from './utils/dateUtils';
 import { useFirebase } from './contexts/FirebaseContext';
 import { db, handleFirestoreError, OperationType, logout } from './lib/firebase';
@@ -29,12 +31,11 @@ import { DebtTableView } from './components/DebtTableView';
 import { DebtModal } from './components/DebtModal';
 import { PaymentModal } from './components/PaymentModal';
 import { DebtDetailModal } from './components/DebtDetailModal';
-import { ReminderModal } from './components/ReminderModal';
 import { PriorityAdvisorModal } from './components/PriorityAdvisorModal';
 import { ExportImportModal } from './components/ExportImportModal';
-import { FullBalanceModal } from './components/FullBalanceModal';
-import { SettleDebtModal } from './components/SettleDebtModal';
 import { PaymentHistory } from './components/PaymentHistory';
+import { ConfirmModal } from './components/ConfirmModal';
+import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, 
@@ -50,7 +51,17 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const { user, loading, debts, currencyPreference: currency, setCurrencyPreference } = useFirebase();
+  const { 
+    user, 
+    loading, 
+    debts, 
+    currencyPreference: currency, 
+    setCurrencyPreference,
+    isOnline,
+    isSyncing,
+    hasPendingWrites,
+    setLocalDebtsOptimistic,
+  } = useFirebase();
 
   // Dark / Night mode state & synchronization
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -119,17 +130,20 @@ export default function App() {
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentTargetDebt, setPaymentTargetDebt] = useState<DebtItem | null>(null);
+  const [paymentModalInitialMode, setPaymentModalInitialMode] = useState<TransactionType>('subtract');
+
+  const openPaymentModal = (debt: DebtItem, mode: TransactionType = 'subtract') => {
+    setPaymentTargetDebt(debt);
+    setPaymentModalInitialMode(mode);
+    setIsPaymentModalOpen(true);
+  };
 
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [detailTargetDebt, setDetailTargetDebt] = useState<DebtItem | null>(null);
 
-  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
-  const [reminderTargetDebt, setReminderTargetDebt] = useState<DebtItem | null>(null);
-
   const [isPriorityAdvisorOpen, setIsPriorityAdvisorOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isFullBalanceModalOpen, setIsFullBalanceModalOpen] = useState(false);
-  const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
+  const [pendingDeleteDebt, setPendingDeleteDebt] = useState<DebtItem | null>(null);
 
   // Counts & Calculations
   const activeDebts = useMemo(() => debts.filter(d => (d.amount - d.paidAmount) > 0.001), [debts]);
@@ -255,23 +269,33 @@ export default function App() {
     if (!user) return;
     const path = `users/${user.uid}/debts`;
     try {
-      console.log('App: Attempting to save debt. Path:', path, 'Data:', debtData);
       if (debtData.id) {
         const { id, ...updateData } = debtData;
+        const nowStr = new Date().toISOString();
+        
+        // Optimistic update to React state instantly
+        setLocalDebtsOptimistic(prev => prev.map(item => 
+          item.id === id ? { ...item, ...updateData, updatedAt: nowStr } as DebtItem : item
+        ));
+
         const docRef = doc(db, path, id);
         await updateDoc(docRef, {
           ...updateData,
-          updatedAt: new Date().toISOString(),
+          updatedAt: nowStr,
         });
-        setNotification({ message: 'Record updated successfully', type: 'success' });
+        setNotification({ 
+          message: !isOnline ? 'Saved locally (will sync when online)' : 'Record updated successfully', 
+          type: 'success' 
+        });
       } else {
-        const colRef = collection(db, path);
-        // Clean the data: remove id and any potential undefined fields
+        const tempId = 'temp-' + Date.now();
+        const nowStr = new Date().toISOString();
         const cleanedData = JSON.parse(JSON.stringify(debtData));
         delete cleanedData.id;
 
-        const newDebt = {
+        const newDebtPayload: DebtItem = {
           ...cleanedData,
+          id: tempId,
           payments: cleanedData.paidAmount > 0 ? [
             {
               id: 'pay-' + Date.now(),
@@ -279,41 +303,68 @@ export default function App() {
               date: cleanedData.startDate,
               note: 'Initial deposit / payment',
               paymentMethod: 'Initial Deposit',
-              createdAt: new Date().toISOString(),
+              createdAt: nowStr,
             }
           ] : [],
           ownerId: user.uid,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          createdAt: nowStr,
+          updatedAt: nowStr,
         };
-        
-        console.log('App: Final payload for addDoc:', newDebt);
-        const result = await addDoc(colRef, newDebt);
-        console.log('App: Record successfully created with ID:', result.id);
-        setNotification({ message: 'New record created successfully', type: 'success' });
+
+        // Optimistic update to React state instantly
+        setLocalDebtsOptimistic(prev => [newDebtPayload, ...prev]);
+
+        const colRef = collection(db, path);
+        const { id: _, ...firestorePayload } = newDebtPayload;
+        const result = await addDoc(colRef, firestorePayload);
+
+        // Replace tempId with actual firestore id
+        setLocalDebtsOptimistic(prev => prev.map(item => 
+          item.id === tempId ? { ...item, id: result.id } : item
+        ));
+
+        setNotification({ 
+          message: !isOnline ? 'Created locally (will sync when online)' : 'New record created successfully', 
+          type: 'success' 
+        });
       }
     } catch (error: any) {
-      console.error('App: handleSaveDebt CRITICAL error:', error);
-      console.error('App: Error code:', error?.code);
-      console.error('App: Error message:', error?.message);
-      
-      const friendlyMessage = error?.code === 'permission-denied' 
-        ? 'Permission Denied: Database rules blocked this save.' 
-        : `Cloud Error: ${error?.message || 'Unknown error'}`;
-        
-      setNotification({ message: `Critical: ${friendlyMessage}`, type: 'error' });
-      handleFirestoreError(error, debtData.id ? OperationType.UPDATE : OperationType.CREATE, path);
-      throw error; 
+      console.warn('App: handleSaveDebt note:', error);
+      if (!isOnline) {
+        setNotification({ message: 'Saved to offline cache • Will sync when connected', type: 'success' });
+      } else {
+        handleFirestoreError(error, debtData.id ? OperationType.UPDATE : OperationType.CREATE, path);
+      }
     }
   };
 
-  const handleDeleteDebt = async (debtId: string) => {
+  const handleDeleteDebt = (debtId: string) => {
+    const debt = debts.find(d => d.id === debtId);
+    if (debt) {
+      setPendingDeleteDebt(debt);
+    }
+  };
+
+  const executeDeleteDebt = async (debtId: string) => {
     if (!user) return;
-    if (confirm('Are you sure you want to delete this debt record?')) {
-      const path = `users/${user.uid}/debts/${debtId}`;
-      try {
-        await deleteDoc(doc(db, path));
-      } catch (error) {
+    const path = `users/${user.uid}/debts/${debtId}`;
+    try {
+      // Optimistic delete
+      setLocalDebtsOptimistic(prev => prev.filter(d => d.id !== debtId));
+      if (detailTargetDebt && detailTargetDebt.id === debtId) {
+        setIsDetailModalOpen(false);
+        setDetailTargetDebt(null);
+      }
+
+      await deleteDoc(doc(db, path));
+      setNotification({ 
+        message: !isOnline ? 'Deleted locally (will sync when online)' : 'Debt record deleted', 
+        type: 'success' 
+      });
+    } catch (error) {
+      if (!isOnline) {
+        setNotification({ message: 'Deleted locally • Will sync when online', type: 'success' });
+      } else {
         handleFirestoreError(error, OperationType.DELETE, path);
       }
     }
@@ -323,31 +374,69 @@ export default function App() {
     if (!user) return;
     const isCurrentlySettled = (debt.amount - debt.paidAmount) <= 0.001;
     const path = `users/${user.uid}/debts/${debt.id}`;
+    const nowStr = new Date().toISOString();
+
     try {
       if (isCurrentlySettled) {
-        await updateDoc(doc(db, path), {
+        const updatedData = {
           paidAmount: 0,
           payments: [],
-          updatedAt: new Date().toISOString(),
-        });
+          updatedAt: nowStr,
+        };
+
+        // Optimistic update
+        setLocalDebtsOptimistic(prev => prev.map(d => 
+          d.id === debt.id ? { ...d, ...updatedData } as DebtItem : d
+        ));
+        if (detailTargetDebt && detailTargetDebt.id === debt.id) {
+          setDetailTargetDebt({ ...debt, ...updatedData } as DebtItem);
+        }
+
+        await updateDoc(doc(db, path), updatedData);
+        setNotification({ message: 'Debt reopened', type: 'success' });
       } else {
         const remaining = debt.amount - debt.paidAmount;
         const fullPayment = {
           id: 'pay-' + Date.now(),
           amount: remaining,
-          date: new Date().toISOString().slice(0, 10),
+          date: nowStr.slice(0, 10),
           note: 'Marked as settled in full',
           paymentMethod: 'Settled',
-          createdAt: new Date().toISOString(),
+          createdAt: nowStr,
         };
-        await updateDoc(doc(db, path), {
+        const updatedData = {
           paidAmount: debt.amount,
           payments: [...(debt.payments || []), fullPayment],
-          updatedAt: new Date().toISOString(),
-        });
+          updatedAt: nowStr,
+        };
+
+        // Optimistic update
+        setLocalDebtsOptimistic(prev => prev.map(d => 
+          d.id === debt.id ? { ...d, ...updatedData } as DebtItem : d
+        ));
+        if (detailTargetDebt && detailTargetDebt.id === debt.id) {
+          setDetailTargetDebt({ ...debt, ...updatedData } as DebtItem);
+        }
+
+        try {
+          confetti({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        } catch (e) {
+          // ignore
+        }
+
+        await updateDoc(doc(db, path), updatedData);
+        setNotification({ message: 'Debt marked as fully settled! 🎉', type: 'success' });
       }
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, path);
+      if (!isOnline) {
+        setNotification({ message: 'Status updated locally', type: 'success' });
+      } else {
+        handleFirestoreError(error, OperationType.UPDATE, path);
+      }
     }
   };
 
@@ -356,35 +445,65 @@ export default function App() {
     date: string;
     note: string;
     paymentMethod: string;
+    type?: TransactionType;
   }) => {
     if (!user) return;
     const path = `users/${user.uid}/debts/${debtId}`;
     const debt = debts.find(d => d.id === debtId);
     if (!debt) return;
 
+    const txType = payment.type || 'subtract';
+    const nowStr = new Date().toISOString();
     const newRecord = {
       id: 'pay-' + Date.now(),
       amount: payment.amount,
       date: payment.date,
       note: payment.note,
       paymentMethod: payment.paymentMethod,
-      createdAt: new Date().toISOString(),
+      type: txType,
+      createdAt: nowStr,
     };
 
     try {
-      const newPaid = Math.min(debt.amount, debt.paidAmount + payment.amount);
-      const updatedDebtData = {
-        paidAmount: newPaid,
-        payments: [...(debt.payments || []), newRecord],
-        updatedAt: new Date().toISOString(),
-      };
-      await updateDoc(doc(db, path), updatedDebtData);
-      
-      if (detailTargetDebt && detailTargetDebt.id === debtId) {
-        setDetailTargetDebt({ ...debt, ...updatedDebtData });
+      let updatedDebtData: Partial<DebtItem>;
+      if (txType === 'add') {
+        const newAmount = debt.amount + payment.amount;
+        updatedDebtData = {
+          amount: newAmount,
+          payments: [...(debt.payments || []), newRecord],
+          updatedAt: nowStr,
+        };
+      } else {
+        const newPaid = Math.min(debt.amount, debt.paidAmount + payment.amount);
+        updatedDebtData = {
+          paidAmount: newPaid,
+          payments: [...(debt.payments || []), newRecord],
+          updatedAt: nowStr,
+        };
       }
+
+      // Optimistic update
+      setLocalDebtsOptimistic(prev => prev.map(d => 
+        d.id === debtId ? { ...d, ...updatedDebtData } as DebtItem : d
+      ));
+      if (detailTargetDebt && detailTargetDebt.id === debtId) {
+        setDetailTargetDebt({ ...debt, ...updatedDebtData } as DebtItem);
+      }
+
+      await updateDoc(doc(db, path), updatedDebtData);
+
+      setNotification({
+        message: txType === 'add'
+          ? `Added ${formatCurrency(payment.amount, currency)} to loan principal`
+          : `Recorded payment of ${formatCurrency(payment.amount, currency)}`,
+        type: 'success'
+      });
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, path);
+      if (!isOnline) {
+        setNotification({ message: 'Transaction recorded locally', type: 'success' });
+      } else {
+        handleFirestoreError(error, OperationType.UPDATE, path);
+      }
     }
   };
 
@@ -395,23 +514,45 @@ export default function App() {
     if (!debt) return;
 
     const targetPayment = (debt.payments || []).find(p => p.id === paymentId);
-    const deducted = targetPayment ? targetPayment.amount : 0;
+    const amountVal = targetPayment ? targetPayment.amount : 0;
+    const isAddition = targetPayment?.type === 'add';
     const newPayments = (debt.payments || []).filter(p => p.id !== paymentId);
-    const newPaid = Math.max(0, debt.paidAmount - deducted);
+    const nowStr = new Date().toISOString();
 
     try {
-      const updatedDebtData = {
-        paidAmount: newPaid,
-        payments: newPayments,
-        updatedAt: new Date().toISOString(),
-      };
-      await updateDoc(doc(db, path), updatedDebtData);
-
-      if (detailTargetDebt && detailTargetDebt.id === debtId) {
-        setDetailTargetDebt({ ...debt, ...updatedDebtData });
+      let updatedDebtData: Partial<DebtItem>;
+      if (isAddition) {
+        const newAmount = Math.max(debt.paidAmount, debt.amount - amountVal);
+        updatedDebtData = {
+          amount: newAmount,
+          payments: newPayments,
+          updatedAt: nowStr,
+        };
+      } else {
+        const newPaid = Math.max(0, debt.paidAmount - amountVal);
+        updatedDebtData = {
+          paidAmount: newPaid,
+          payments: newPayments,
+          updatedAt: nowStr,
+        };
       }
+
+      // Optimistic update
+      setLocalDebtsOptimistic(prev => prev.map(d => 
+        d.id === debtId ? { ...d, ...updatedDebtData } as DebtItem : d
+      ));
+      if (detailTargetDebt && detailTargetDebt.id === debtId) {
+        setDetailTargetDebt({ ...debt, ...updatedDebtData } as DebtItem);
+      }
+
+      await updateDoc(doc(db, path), updatedDebtData);
+      setNotification({ message: 'Transaction entry removed', type: 'success' });
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, path);
+      if (!isOnline) {
+        setNotification({ message: 'Entry removed locally', type: 'success' });
+      } else {
+        handleFirestoreError(error, OperationType.UPDATE, path);
+      }
     }
   };
 
@@ -437,6 +578,9 @@ export default function App() {
           isStandalone={isStandalone}
           isDarkMode={isDarkMode}
           onToggleDarkMode={handleToggleDarkMode}
+          isOnline={isOnline}
+          isSyncing={isSyncing}
+          hasPendingWrites={hasPendingWrites}
         />
 
         {/* Scrollable iPhone Main Content Area */}
@@ -454,13 +598,7 @@ export default function App() {
                 className="overflow-hidden"
               >
                 <IPhoneMainActions
-                  onOpenAddModal={() => {
-                    setEditingDebt(null);
-                    setIsDebtModalOpen(true);
-                  }}
-                  onOpenSettleModal={() => setIsSettleModalOpen(true)}
                   onOpenFullBalance={() => setActiveNavTab('balance')}
-                  unsettledCount={activeDebts.length}
                   totalIOwe={totalIOwe}
                   totalOwedToMe={totalOwedToMe}
                   currency={currency}
@@ -477,6 +615,7 @@ export default function App() {
               debts={debts}
               currency={currency}
               onQuickSettle={handleQuickSettle}
+              onRecordPayment={(d, mode) => openPaymentModal(d, mode || 'subtract')}
               onSelectDebt={(d) => {
                 setDetailTargetDebt(d);
                 setIsDetailModalOpen(true);
@@ -510,10 +649,7 @@ export default function App() {
                       key={debt.id}
                       debt={debt}
                       currency={currency}
-                      onRecordPayment={(d) => {
-                        setPaymentTargetDebt(d);
-                        setIsPaymentModalOpen(true);
-                      }}
+                      onRecordPayment={(d, mode) => openPaymentModal(d, mode || 'subtract')}
                       onViewDetails={(d) => {
                         setDetailTargetDebt(d);
                         setIsDetailModalOpen(true);
@@ -524,10 +660,6 @@ export default function App() {
                       }}
                       onDeleteDebt={handleDeleteDebt}
                       onQuickSettle={handleQuickSettle}
-                      onOpenReminder={(d) => {
-                        setReminderTargetDebt(d);
-                        setIsReminderModalOpen(true);
-                      }}
                     />
                   ))}
                 </div>
@@ -593,64 +725,17 @@ export default function App() {
 
       </div>
 
-      {/* Modals & iOS Sheets */}
-      <DebtModal
-        isOpen={isDebtModalOpen}
-        onClose={() => {
-          setIsDebtModalOpen(false);
-          setEditingDebt(null);
-        }}
-        onSave={handleSaveDebt}
-        editingDebt={editingDebt}
-        currency={currency}
-        existingDebts={debts}
-      />
-
-      <SettleDebtModal
-        isOpen={isSettleModalOpen}
-        onClose={() => setIsSettleModalOpen(false)}
+      {/* Primary Detail & Advisory Overlays */}
+      <PriorityAdvisorModal
+        isOpen={isPriorityAdvisorOpen}
+        onClose={() => setIsPriorityAdvisorOpen(false)}
         debts={debts}
         currency={currency}
-        onQuickSettle={handleQuickSettle}
-        onRecordPayment={(d) => {
-          setPaymentTargetDebt(d);
-          setIsPaymentModalOpen(true);
-        }}
-        onSelectDebt={(d) => {
+        onRecordPayment={(d) => openPaymentModal(d, 'subtract')}
+        onViewDetails={(d) => {
           setDetailTargetDebt(d);
           setIsDetailModalOpen(true);
         }}
-      />
-
-      <FullBalanceModal
-        isOpen={isFullBalanceModalOpen}
-        onClose={() => {
-          setIsFullBalanceModalOpen(false);
-          setActiveNavTab('ledger');
-        }}
-        debts={debts}
-        currency={currency}
-        onQuickSettle={handleQuickSettle}
-        onSelectDebt={(d) => {
-          setDetailTargetDebt(d);
-          setIsDetailModalOpen(true);
-        }}
-        onOpenAddModal={() => {
-          setIsFullBalanceModalOpen(false);
-          setEditingDebt(null);
-          setIsDebtModalOpen(true);
-        }}
-      />
-
-      <PaymentModal
-        isOpen={isPaymentModalOpen}
-        onClose={() => {
-          setIsPaymentModalOpen(false);
-          setPaymentTargetDebt(null);
-        }}
-        debt={paymentTargetDebt}
-        currency={currency}
-        onAddPayment={handleAddPayment}
       />
 
       <DebtDetailModal
@@ -661,49 +746,42 @@ export default function App() {
         }}
         debt={detailTargetDebt}
         currency={currency}
-        onRecordPayment={(d) => {
-          setPaymentTargetDebt(d);
-          setIsPaymentModalOpen(true);
-        }}
+        onRecordPayment={(d, mode) => openPaymentModal(d, mode || 'subtract')}
         onEditDebt={(d) => {
           setEditingDebt(d);
           setIsDebtModalOpen(true);
         }}
         onDeleteDebt={(id) => {
-          handleDeleteDebt(id);
-          setIsDetailModalOpen(false);
+          executeDeleteDebt(id);
         }}
         onQuickSettle={handleQuickSettle}
-        onOpenReminder={(d) => {
-          setReminderTargetDebt(d);
-          setIsReminderModalOpen(true);
-        }}
         onDeletePaymentRecord={handleDeletePaymentRecord}
       />
 
-      <ReminderModal
-        isOpen={isReminderModalOpen}
+      {/* Action Overlays & Modals (Rendered with higher z-index on top of sheets) */}
+      <DebtModal
+        isOpen={isDebtModalOpen}
         onClose={() => {
-          setIsReminderModalOpen(false);
-          setReminderTargetDebt(null);
+          setIsDebtModalOpen(false);
+          setEditingDebt(null);
         }}
-        debt={reminderTargetDebt}
+        onSave={handleSaveDebt}
+        editingDebt={editingDebt}
         currency={currency}
+        existingDebts={debts}
+        onRecordPayment={openPaymentModal}
       />
 
-      <PriorityAdvisorModal
-        isOpen={isPriorityAdvisorOpen}
-        onClose={() => setIsPriorityAdvisorOpen(false)}
-        debts={debts}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+          setPaymentTargetDebt(null);
+        }}
+        debt={paymentTargetDebt}
         currency={currency}
-        onRecordPayment={(d) => {
-          setPaymentTargetDebt(d);
-          setIsPaymentModalOpen(true);
-        }}
-        onViewDetails={(d) => {
-          setDetailTargetDebt(d);
-          setIsDetailModalOpen(true);
-        }}
+        initialMode={paymentModalInitialMode}
+        onAddPayment={handleAddPayment}
       />
 
       <ExportImportModal
@@ -722,16 +800,35 @@ export default function App() {
             }
           }
         }}
-        onResetSampleData={() => {
-          // In cloud mode, maybe we don't want to reset sample data or we do it by adding docs?
-          // Let's just leave it for now or implement as adding sample docs
-        }}
+        onResetSampleData={() => {}}
         onClearAllData={async () => {
           if (!user) return;
           for (const d of debts) {
             await deleteDoc(doc(db, `users/${user.uid}/debts/${d.id}`));
           }
         }}
+      />
+
+      {/* Global 2nd Confirmation Modal for Deleting Debt Record */}
+      <ConfirmModal
+        isOpen={!!pendingDeleteDebt}
+        onClose={() => setPendingDeleteDebt(null)}
+        onConfirm={() => {
+          if (pendingDeleteDebt) {
+            executeDeleteDebt(pendingDeleteDebt.id);
+            setPendingDeleteDebt(null);
+          }
+        }}
+        title="Delete Entire Debt Record?"
+        description="Are you sure you want to delete this record? This action cannot be undone and will permanently erase this record along with all recorded payments."
+        confirmText="Yes, Delete Record"
+        cancelText="Cancel"
+        variant="danger"
+        itemDetails={pendingDeleteDebt ? {
+          name: pendingDeleteDebt.contact.name,
+          amount: formatCurrency(pendingDeleteDebt.amount, currency),
+          category: pendingDeleteDebt.category,
+        } : undefined}
       />
     </div>
   );

@@ -7,12 +7,20 @@ import {
   Cloud, 
   X,
   Sun,
-  Moon
+  Moon,
+  WifiOff,
+  RefreshCw,
+  Check
 } from 'lucide-react';
-import { User } from 'firebase/auth';
+import { CachedUserInfo } from '../contexts/FirebaseContext';
 
 interface AppHeaderProps {
-  user: User;
+  user: {
+    displayName?: string | null;
+    email?: string | null;
+    photoURL?: string | null;
+    uid?: string;
+  };
   currency?: string;
   onCurrencyChange?: (currency: string) => void;
   onOpenExport: () => void;
@@ -22,6 +30,9 @@ interface AppHeaderProps {
   isStandalone?: boolean;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
+  isOnline?: boolean;
+  isSyncing?: boolean;
+  hasPendingWrites?: boolean;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -33,6 +44,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   isStandalone = false,
   isDarkMode,
   onToggleDarkMode,
+  isOnline = true,
+  isSyncing = false,
+  hasPendingWrites = false,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -61,12 +75,36 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       } bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800 sticky top-0 z-30 shrink-0 transition-colors`}
     >
       <div className="flex items-center justify-between gap-3">
-        {/* Left: Clean Brand Logo & Prominent Title */}
+        {/* Left: Clean Brand Logo & Prominent Title with Offline / Sync Indicator */}
         <div className="flex items-center gap-2.5 min-w-0">
           <AppLogo size="md" />
-          <h1 className="text-base sm:text-lg font-black text-zinc-950 dark:text-zinc-100 tracking-[0.22em] leading-none font-mono uppercase select-none">
-            LEDGER
-          </h1>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base sm:text-lg font-black text-zinc-950 dark:text-zinc-100 tracking-[0.22em] leading-none font-mono uppercase select-none">
+                LEDGER
+              </h1>
+              
+              {/* Discrete Sync Status Indicator */}
+              <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700 text-[9px] font-medium transition-all select-none">
+                {!isOnline ? (
+                  <>
+                    <WifiOff className="w-2.5 h-2.5 text-amber-500 dark:text-amber-400" />
+                    <span className="text-zinc-600 dark:text-zinc-400 font-semibold">Offline</span>
+                  </>
+                ) : isSyncing || hasPendingWrites ? (
+                  <>
+                    <RefreshCw className="w-2.5 h-2.5 text-zinc-500 dark:text-zinc-400 animate-spin" />
+                    <span className="text-zinc-600 dark:text-zinc-400">Syncing</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="text-zinc-500 dark:text-zinc-400">Synced</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right: Quick Action Controls */}
@@ -172,7 +210,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     setIsMenuOpen(false);
                     onOpenAdvisor();
                   }}
-                  className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 transition-colors"
+                  className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
@@ -190,7 +228,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     setIsMenuOpen(false);
                     onOpenExport();
                   }}
-                  className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 transition-colors"
+                  className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     <Download className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
@@ -199,10 +237,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 </button>
               </div>
 
-              {/* Cloud Sync Status */}
-              <div className="px-2 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-800 flex items-center gap-1.5 text-[10px] text-zinc-500 dark:text-zinc-400 font-medium mb-2">
-                <Cloud className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span className="truncate">Firebase Cloud Synced</span>
+              {/* Cloud Sync / Offline Status Row */}
+              <div className="px-2.5 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400 font-medium mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Cloud className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400 shrink-0" />
+                  <span>Cloud Persistence</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {!isOnline ? (
+                    <span className="text-amber-600 dark:text-amber-400 font-semibold">Local Offline</span>
+                  ) : isSyncing || hasPendingWrites ? (
+                    <span className="text-zinc-600 dark:text-zinc-300 font-medium">Syncing...</span>
+                  ) : (
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-0.5">
+                      <Check className="w-3 h-3" />
+                      <span>Live Synced</span>
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Logout Button */}
