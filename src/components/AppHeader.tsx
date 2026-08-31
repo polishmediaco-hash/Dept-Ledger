@@ -63,6 +63,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <div className="flex items-center justify-between gap-2">
         {/* Left: Clean Brand Logo */}
         <div className="flex items-center gap-2 min-w-0">
+          <AppLogo size="sm" />
           <h1 className="text-sm font-black text-zinc-950 dark:text-zinc-100 tracking-[0.25em] leading-none font-mono uppercase select-none">
             LEDGER
           </h1>

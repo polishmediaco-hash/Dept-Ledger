@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { signInWithGoogle } from '../lib/firebase';
 import { Loader2, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
+import { AppLogo } from './AppLogo';
 
 export const AuthScreen: React.FC = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -28,16 +29,16 @@ export const AuthScreen: React.FC = () => {
         className="w-full max-w-xs text-center space-y-10"
       >
         {/* Typographic Logo & Slogan */}
-        <div className="space-y-3">
-          <div className="inline-flex items-center justify-center gap-1.5">
+        <div className="space-y-4 flex flex-col items-center">
+          <AppLogo size="xl" />
+          <div className="space-y-2">
             <span className="text-3xl sm:text-4xl font-black tracking-[0.25em] font-mono text-zinc-950 uppercase select-none">
               LEDGER
             </span>
+            <p className="text-xs text-zinc-500 font-serif italic tracking-wide leading-relaxed">
+              “A Lannister always pays his debts”
+            </p>
           </div>
-
-          <p className="text-xs text-zinc-500 font-serif italic tracking-wide leading-relaxed">
-            “A Lannister always pays his debts”
-          </p>
         </div>
 
         {errorMsg && (
