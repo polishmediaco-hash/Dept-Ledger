@@ -3,6 +3,11 @@ export type DebtCategory = 'personal' | 'business';
 export type PriorityLevel = 'urgent' | 'high' | 'medium' | 'low';
 export type DebtStatus = 'active' | 'partially_paid' | 'settled' | 'overdue';
 
+export enum DebtType {
+  OWE_ME = 'OWE_ME',
+  I_OWE = 'I_OWE'
+}
+
 export interface PaymentRecord {
   id: string;
   amount: number;
@@ -23,6 +28,7 @@ export interface ContactInfo {
 
 export interface DebtItem {
   id: string;
+  ownerId: string;
   title: string; // e.g. "Web Design Project Invoice", "Loan for Car Repair", "Dinner Split"
   direction: DebtDirection;
   category: DebtCategory;

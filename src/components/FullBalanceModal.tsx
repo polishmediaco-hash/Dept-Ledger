@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { DebtItem } from '../types';
-import { formatCurrency, getDaysUntilDue, getDaysElapsed } from '../utils/dateUtils';
+import { formatCurrency } from '../utils/dateUtils';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
-  ArrowDownLeft, 
-  ArrowUpRight, 
-  User, 
-  Briefcase, 
-  Scale, 
-  Plus
+  TrendingUp,
+  TrendingDown,
+  PieChart,
+  Plus,
+  DollarSign
 } from 'lucide-react';
 
 interface FullBalanceModalProps {
@@ -27,242 +26,148 @@ export const FullBalanceModal: React.FC<FullBalanceModalProps> = ({
   onClose,
   debts,
   currency,
-  onQuickSettle,
   onSelectDebt,
   onOpenAddModal,
 }) => {
-  const [activeTab, setActiveTab] = useState<'both' | 'i_owe' | 'owed_to_me'>('both');
-
   const activeDebts = debts.filter(d => (d.amount - d.paidAmount) > 0.001);
 
-  // Column 1: I OWE (Payables)
-  const iOweDebts = activeDebts.filter(d => d.direction === 'i_owe');
-  const iOwePersonal = iOweDebts.filter(d => d.category === 'personal');
-  const iOweBusiness = iOweDebts.filter(d => d.category === 'business');
+  const totalIOwe = activeDebts
+    .filter(d => d.direction === 'i_owe')
+    .reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
 
-  const totalIOwePersonal = iOwePersonal.reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
-  const totalIOweBusiness = iOweBusiness.reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
-  const totalIOwe = totalIOwePersonal + totalIOweBusiness;
+  const totalOwedToMe = activeDebts
+    .filter(d => d.direction === 'owed_to_me')
+    .reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
 
-  // Column 2: OWED TO ME (Receivables)
-  const owedToMeDebts = activeDebts.filter(d => d.direction === 'owed_to_me');
-  const owedToMePersonal = owedToMeDebts.filter(d => d.category === 'personal');
-  const owedToMeBusiness = owedToMeDebts.filter(d => d.category === 'business');
-
-  const totalOwedToMePersonal = owedToMePersonal.reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
-  const totalOwedToMeBusiness = owedToMeBusiness.reduce((sum, d) => sum + (d.amount - d.paidAmount), 0);
-  const totalOwedToMe = totalOwedToMePersonal + totalOwedToMeBusiness;
-
-  const netBalance = totalOwedToMe - totalIOwe;
+  const debtsByCategory = activeDebts.reduce((acc, d) => {
+    acc[d.category] = (acc[d.category] || 0) + (d.amount - d.paidAmount);
+    return acc;
+  }, {} as Record<string, number>);
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
-          />
-
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-zinc-900/40 backdrop-blur-sm"
+          onClick={onClose}
+        >
           <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-[101] bg-zinc-950 text-white rounded-t-[32px] shadow-2xl overflow-hidden h-[94vh] flex flex-col mx-auto max-w-[600px]"
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="w-full max-w-2xl bg-white sm:rounded-[32px] overflow-hidden flex flex-col h-[92vh] sm:h-[85vh] shadow-2xl border border-zinc-200"
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* iOS Handle */}
-            <div className="w-full flex justify-center pt-3 pb-1 shrink-0">
-              <div className="w-12 h-1.5 bg-zinc-800 rounded-full" />
-            </div>
-
             {/* Header */}
-            <div className="px-6 py-4 flex items-center justify-between border-b border-zinc-900 shrink-0">
+            <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-400">
-                  <Scale className="w-6 h-6" />
+                <div className="h-10 w-10 rounded-2xl bg-zinc-900 text-emerald-400 flex items-center justify-center shadow-lg">
+                  <DollarSign className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black leading-tight">Full Balance</h2>
-                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Global Position Overview</p>
+                  <h2 className="text-xl font-bold text-zinc-900">Financial Overview</h2>
+                  <p className="text-xs text-zinc-500 font-medium tracking-wide uppercase">Full Balance Ledger</p>
                 </div>
               </div>
-              <button
+              <button 
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400"
+                className="p-2.5 rounded-full hover:bg-zinc-100 text-zinc-400 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Position Summary Area */}
-            <div className="px-6 py-6 bg-zinc-900 shrink-0">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-rose-950/30 border border-rose-900/40 p-4 rounded-3xl space-y-1">
-                  <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest block">I Owe</span>
-                  <span className="text-sm font-black text-rose-100">{formatCurrency(totalIOwe, currency)}</span>
+            <div className="flex-1 overflow-y-auto px-6 py-8">
+              {/* Main Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div className="bg-white border-2 border-emerald-100 rounded-[28px] p-6 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-emerald-600 font-black mb-1">
+                      <TrendingUp className="w-4 h-4" />
+                      <span className="text-[10px] uppercase tracking-[0.15em]">Money Owed To Me</span>
+                    </div>
+                    <div className="text-4xl font-black text-zinc-900">{currency}{totalOwedToMe.toLocaleString()}</div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-2">
+                    <div className="h-2 flex-1 bg-zinc-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: '70%' }}></div>
+                    </div>
+                    <span className="text-[10px] font-black text-emerald-600">INCOME</span>
+                  </div>
                 </div>
-                <div className="bg-emerald-950/30 border border-emerald-900/40 p-4 rounded-3xl space-y-1">
-                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest block">Owed to Me</span>
-                  <span className="text-sm font-black text-emerald-100">{formatCurrency(totalOwedToMe, currency)}</span>
-                </div>
-                <div className={`p-4 rounded-3xl border space-y-1 ${netBalance >= 0 ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-rose-500/10 border-rose-500/20'}`}>
-                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block">Net Position</span>
-                  <span className={`text-sm font-black ${netBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {netBalance >= 0 ? '+' : '-'}{formatCurrency(Math.abs(netBalance), currency)}
-                  </span>
+
+                <div className="bg-white border-2 border-rose-100 rounded-[28px] p-6 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-rose-600 font-black mb-1">
+                      <TrendingDown className="w-4 h-4" />
+                      <span className="text-[10px] uppercase tracking-[0.15em]">Money I Owe</span>
+                    </div>
+                    <div className="text-4xl font-black text-zinc-900">{currency}{totalIOwe.toLocaleString()}</div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-2">
+                    <div className="h-2 flex-1 bg-zinc-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-rose-500 rounded-full" style={{ width: '30%' }}></div>
+                    </div>
+                    <span className="text-[10px] font-black text-rose-600">DEBT</span>
+                  </div>
                 </div>
               </div>
 
-              {/* View Switcher */}
-              <div className="mt-6 flex p-1 bg-zinc-950 rounded-2xl border border-zinc-800">
-                {[
-                  { id: 'both', label: 'Overview' },
-                  { id: 'i_owe', label: 'I Owe' },
-                  { id: 'owed_to_me', label: 'Owed' }
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${
-                      activeTab === tab.id ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-500'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+              {/* Categories */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest ml-1">Category Distribution</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {Object.entries(debtsByCategory).map(([cat, amount], idx) => (
+                    <div key={idx} className="bg-zinc-50 border border-zinc-100 p-4 rounded-2xl flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-white border border-zinc-200 flex items-center justify-center text-zinc-900 shadow-sm">
+                        <PieChart className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-bold text-zinc-400 uppercase">{cat}</div>
+                        <div className="text-base font-bold text-zinc-900">{currency}{amount.toLocaleString()}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Charts placeholder/info */}
+              <div className="mt-8 p-6 bg-zinc-900 rounded-[24px] text-white overflow-hidden relative">
+                 <div className="relative z-10">
+                   <h3 className="text-lg font-bold mb-1">Financial Health</h3>
+                   <p className="text-zinc-400 text-sm mb-4">Your net balance is {currency}{(totalOwedToMe - totalIOwe).toLocaleString()}</p>
+                   <div className="flex gap-2">
+                     <div className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-full border border-emerald-500/30 uppercase">Optimized</div>
+                     <div className="px-3 py-1 bg-zinc-800 text-zinc-400 text-[10px] font-bold rounded-full border border-zinc-700 uppercase">Verified</div>
+                   </div>
+                 </div>
+                 <DollarSign className="absolute -right-4 -bottom-4 w-32 h-32 text-white/5 rotate-12" />
               </div>
             </div>
 
-            {/* List Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
-              
-              {/* Payables Column */}
-              {(activeTab === 'both' || activeTab === 'i_owe') && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <ArrowUpRight className="w-5 h-5 text-rose-500" />
-                    <h3 className="text-sm font-black uppercase tracking-widest">Payables (I Owe)</h3>
-                  </div>
-                  
-                  {/* Personal Section */}
-                  {iOwePersonal.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                        <span>Personal Records</span>
-                        <span>{formatCurrency(totalIOwePersonal, currency)}</span>
-                      </div>
-                      <div className="space-y-2">
-                        {iOwePersonal.map(debt => (
-                          <div key={debt.id} onClick={() => onSelectDebt(debt)} className="bg-zinc-900 rounded-2xl p-4 flex items-center justify-between border border-zinc-800 active:scale-95 transition-transform">
-                            <div className="min-w-0 pr-4">
-                              <h4 className="text-sm font-bold truncate">{debt.contact.name}</h4>
-                              <p className="text-[10px] font-bold text-zinc-500 truncate">{debt.title || 'General'}</p>
-                            </div>
-                            <span className="text-sm font-black text-rose-400 shrink-0">{formatCurrency(debt.amount - debt.paidAmount, currency)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Business Section */}
-                  {iOweBusiness.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                        <span>Business Records</span>
-                        <span>{formatCurrency(totalIOweBusiness, currency)}</span>
-                      </div>
-                      <div className="space-y-2">
-                        {iOweBusiness.map(debt => (
-                          <div key={debt.id} onClick={() => onSelectDebt(debt)} className="bg-zinc-900 rounded-2xl p-4 flex items-center justify-between border border-zinc-800 active:scale-95 transition-transform">
-                            <div className="min-w-0 pr-4">
-                              <h4 className="text-sm font-bold truncate">{debt.contact.name}</h4>
-                              <p className="text-[10px] font-bold text-zinc-500 truncate">{debt.title || 'Vendor Invoice'}</p>
-                            </div>
-                            <span className="text-sm font-black text-rose-400 shrink-0">{formatCurrency(debt.amount - debt.paidAmount, currency)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Receivables Column */}
-              {(activeTab === 'both' || activeTab === 'owed_to_me') && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <ArrowDownLeft className="w-5 h-5 text-emerald-500" />
-                    <h3 className="text-sm font-black uppercase tracking-widest">Receivables (Owed)</h3>
-                  </div>
-                  
-                  {/* Personal Section */}
-                  {owedToMePersonal.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                        <span>Personal Records</span>
-                        <span>{formatCurrency(totalOwedToMePersonal, currency)}</span>
-                      </div>
-                      <div className="space-y-2">
-                        {owedToMePersonal.map(debt => (
-                          <div key={debt.id} onClick={() => onSelectDebt(debt)} className="bg-zinc-900 rounded-2xl p-4 flex items-center justify-between border border-zinc-800 active:scale-95 transition-transform">
-                            <div className="min-w-0 pr-4">
-                              <h4 className="text-sm font-bold truncate">{debt.contact.name}</h4>
-                              <p className="text-[10px] font-bold text-zinc-500 truncate">{debt.title || 'Personal Loan'}</p>
-                            </div>
-                            <span className="text-sm font-black text-emerald-400 shrink-0">{formatCurrency(debt.amount - debt.paidAmount, currency)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Business Section */}
-                  {owedToMeBusiness.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                        <span>Business Records</span>
-                        <span>{formatCurrency(totalOwedToMeBusiness, currency)}</span>
-                      </div>
-                      <div className="space-y-2">
-                        {owedToMeBusiness.map(debt => (
-                          <div key={debt.id} onClick={() => onSelectDebt(debt)} className="bg-zinc-900 rounded-2xl p-4 flex items-center justify-between border border-zinc-800 active:scale-95 transition-transform">
-                            <div className="min-w-0 pr-4">
-                              <h4 className="text-sm font-bold truncate">{debt.contact.name}</h4>
-                              <p className="text-[10px] font-bold text-zinc-500 truncate">{debt.title || 'Client Debt'}</p>
-                            </div>
-                            <span className="text-sm font-black text-emerald-400 shrink-0">{formatCurrency(debt.amount - debt.paidAmount, currency)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-            </div>
-
-            <div className="p-6 bg-zinc-900 border-t border-zinc-800 flex gap-3 shrink-0">
-              <button
+            {/* Footer Action */}
+            <div className="p-6 border-t border-zinc-100 bg-zinc-50/50 flex gap-3">
+              <button 
                 onClick={onOpenAddModal}
-                className="flex-1 py-4 rounded-2xl bg-zinc-800 text-white font-bold active:scale-95 transition-transform flex items-center justify-center gap-2"
+                className="flex-1 py-4 bg-zinc-100 text-zinc-900 border border-zinc-200 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
               >
-                <Plus className="w-5 h-5" /> New Record
+                <Plus className="w-5 h-5" /> Add Entry
               </button>
-              <button
+              <button 
                 onClick={onClose}
-                className="flex-1 py-4 rounded-2xl bg-white text-zinc-950 font-bold shadow-lg active:scale-95 transition-transform"
+                className="flex-1 py-4 bg-zinc-900 text-white rounded-2xl font-bold shadow-xl shadow-zinc-900/10 active:scale-[0.98] transition-all"
               >
-                Done
+                Close Insights
               </button>
             </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );
 };
+

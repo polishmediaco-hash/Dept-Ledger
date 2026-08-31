@@ -1,25 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  DebtItem, 
-  DebtDirection, 
-  DebtCategory, 
-  PriorityLevel 
-} from '../types';
-import { getTodayString } from '../utils/dateUtils';
+import React, { useState, useEffect, useMemo } from 'react';
+import { DebtItem, DebtType } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
-  ArrowDownLeft,
-  ArrowUpRight,
   User, 
-  Briefcase, 
-  ChevronDown,
-  ChevronUp,
-  Phone, 
-  Mail, 
-  CreditCard,
-  Calendar,
-  Tag
+  DollarSign, 
+  Calendar, 
+  Tag, 
+  Info, 
+  AtSign, 
+  Phone,
+  Plus,
+  AlertCircle
 } from 'lucide-react';
 
 interface DebtModalProps {
@@ -28,446 +20,322 @@ interface DebtModalProps {
   onSave: (debt: Omit<DebtItem, 'id' | 'createdAt' | 'updatedAt' | 'payments'> & { id?: string }) => void;
   editingDebt?: DebtItem | null;
   currency: string;
+  existingDebts?: DebtItem[];
 }
 
-export const DebtModal: React.FC<DebtModalProps> = ({
-  isOpen,
-  onClose,
-  onSave,
-  editingDebt,
-  currency,
-}) => {
-  const [direction, setDirection] = useState<DebtDirection>('owed_to_me');
-  const [category, setCategory] = useState<DebtCategory>('personal');
-  const [title, setTitle] = useState('');
+export function DebtModal({ isOpen, onClose, onSave, editingDebt, currency, existingDebts = [] }: DebtModalProps) {
+  const [type, setType] = useState<DebtType>(DebtType.OWE_ME);
+  const [contactName, setContactName] = useState('');
+  const [contactInfo, setContactInfo] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
   const [amount, setAmount] = useState('');
-  const [paidAmount, setPaidAmount] = useState('0');
-  const [startDate, setStartDate] = useState(getTodayString());
+  const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [hasDueDate, setHasDueDate] = useState(true);
-  const [priority, setPriority] = useState<PriorityLevel>('medium');
-  const [priorityReason, setPriorityReason] = useState('');
-  const [name, setName] = useState('');
-  const [company, setCompany] = useState('');
-  const [relationship, setRelationship] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [paymentDetails, setPaymentDetails] = useState('');
-  const [notes, setNotes] = useState('');
-  const [tags, setTags] = useState('');
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
+  const [category, setCategory] = useState<'personal' | 'business'>('personal');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
-    setErrorMessage(null);
-    setIsSaving(false);
     if (editingDebt) {
-      setDirection(editingDebt.direction);
-      setCategory(editingDebt.category);
-      setTitle(editingDebt.title || '');
+      setType(editingDebt.direction === 'owed_to_me' ? DebtType.OWE_ME : DebtType.I_OWE);
+      setContactName(editingDebt.contact.name);
+      setContactInfo(editingDebt.contact.phone || '');
+      setContactEmail(editingDebt.contact.email || '');
       setAmount(editingDebt.amount.toString());
-      setPaidAmount(editingDebt.paidAmount.toString());
-      setStartDate(editingDebt.startDate || getTodayString());
+      setDescription(editingDebt.title || '');
       setDueDate(editingDebt.dueDate || '');
-      setHasDueDate(!!editingDebt.dueDate);
-      setPriority(editingDebt.priority || 'medium');
-      setPriorityReason(editingDebt.priorityReason || '');
-      setName(editingDebt.contact.name || '');
-      setCompany(editingDebt.contact.company || '');
-      setRelationship(editingDebt.contact.relationship || '');
-      setPhone(editingDebt.contact.phone || '');
-      setEmail(editingDebt.contact.email || '');
-      setPaymentDetails(editingDebt.contact.paymentDetails || '');
-      setNotes(editingDebt.notes || '');
-      setTags(editingDebt.tags ? editingDebt.tags.join(', ') : '');
-      if (editingDebt.contact.phone || editingDebt.contact.email || editingDebt.contact.paymentDetails || editingDebt.notes || editingDebt.priorityReason) {
-        setShowAdvanced(true);
-      }
+      setStartDate(editingDebt.startDate);
+      setCategory(editingDebt.category);
+      setPriority(editingDebt.priority);
     } else {
-      setDirection('owed_to_me');
-      setCategory('personal');
-      setTitle('');
+      setType(DebtType.OWE_ME);
+      setContactName('');
+      setContactInfo('');
+      setContactEmail('');
       setAmount('');
-      setPaidAmount('0');
-      setStartDate(getTodayString());
-      const d = new Date();
-      d.setDate(d.getDate() + 14);
-      setDueDate(d.toISOString().slice(0, 10));
-      setHasDueDate(true);
+      setDescription('');
+      setDueDate('');
+      setStartDate(new Date().toISOString().slice(0, 10));
+      setCategory('personal');
       setPriority('medium');
-      setPriorityReason('');
-      setName('');
-      setCompany('');
-      setRelationship('');
-      setPhone('');
-      setEmail('');
-      setPaymentDetails('');
-      setNotes('');
-      setTags('');
-      setShowAdvanced(false);
     }
   }, [editingDebt, isOpen]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
-    
-    if (!name.trim()) {
-      setErrorMessage('Please enter a name');
-      return;
-    }
-    
-    // Support comma decimal separator for some regions
-    const amountStr = amount.toString().replace(',', '.');
-    const numAmount = parseFloat(amountStr);
-    
-    if (isNaN(numAmount) || numAmount <= 0) {
-      setErrorMessage('Please enter a valid amount greater than 0');
-      return;
-    }
-    
-    const paidAmountStr = paidAmount.toString().replace(',', '.');
-    const numPaid = parseFloat(paidAmountStr) || 0;
+  // Derive unique contacts
+  const contacts = useMemo(() => {
+    const map = new Map<string, { info: string; email: string }>();
+    existingDebts.forEach(d => {
+      const lowerName = d.contact.name.toLowerCase();
+      if (!map.has(lowerName)) {
+        map.set(lowerName, {
+          info: d.contact.phone || '',
+          email: d.contact.email || ''
+        });
+      }
+    });
+    return Array.from(map.entries()).map(([lowerName, data]) => ({ 
+      name: existingDebts.find(d => d.contact.name.toLowerCase() === lowerName)?.contact.name || lowerName, 
+      ...data 
+    }));
+  }, [existingDebts]);
 
-    setIsSaving(true);
-    try {
-      await onSave({
-        id: editingDebt ? editingDebt.id : undefined,
-        title: title.trim() || `${direction === 'owed_to_me' ? 'Loan to' : 'Payable to'} ${name.trim()}`,
-        direction,
-        category,
-        amount: numAmount,
-        paidAmount: Math.min(numAmount, Math.max(0, numPaid)),
-        currency: currency || 'DZD',
-        startDate: startDate || getTodayString(),
-        dueDate: hasDueDate ? (dueDate || '') : '',
-        priority,
-        priorityReason: priorityReason.trim(),
-        contact: {
-          name: name.trim(),
-          company: company.trim(),
-          relationship: relationship.trim(),
-          phone: phone.trim(),
-          email: email.trim(),
-          paymentDetails: paymentDetails.trim(),
-        },
-        notes: notes.trim(),
-        tags: tags.split(',').map(t => t.trim()).filter(t => t.length > 0),
-      });
-      onClose();
-    } catch (error) {
-      console.error('DebtModal: Save error:', error);
-      setErrorMessage('Failed to save. Please check your connection.');
-      setIsSaving(false);
-    }
+  const filteredContacts = useMemo(() => {
+    if (!contactName.trim()) return [];
+    return contacts.filter(c => 
+      c.name.toLowerCase().includes(contactName.toLowerCase())
+    ).slice(0, 5);
+  }, [contactName, contacts]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({
+      id: editingDebt?.id,
+      title: description,
+      direction: type === DebtType.OWE_ME ? 'owed_to_me' : 'i_owe',
+      category,
+      amount: parseFloat(amount),
+      paidAmount: editingDebt ? editingDebt.paidAmount : 0,
+      currency,
+      startDate,
+      dueDate,
+      priority,
+      contact: {
+        name: contactName,
+        email: contactEmail,
+        phone: contactInfo,
+      },
+      notes: '',
+      isArchived: false,
+      ownerId: '', // Set in App.tsx
+    });
+    onClose();
   };
+
+  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
-          />
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-zinc-950/40 backdrop-blur-sm" onClick={onClose}>
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="w-full max-w-lg bg-white rounded-t-[32px] sm:rounded-[32px] overflow-hidden flex flex-col max-h-[92vh] shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-20">
+            <h2 className="text-xl font-black text-zinc-900">{editingDebt ? 'Edit Record' : 'New Entry'}</h2>
+            <button onClick={onClose} className="p-2 rounded-full hover:bg-zinc-100 text-zinc-400">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-          {/* Bottom Sheet */}
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-[101] bg-zinc-50 rounded-t-[32px] shadow-2xl overflow-hidden max-h-[92vh] flex flex-col mx-auto max-w-[500px]"
-          >
-            {/* iOS Handle */}
-            <div className="w-full flex justify-center pt-3 pb-1">
-              <div className="w-12 h-1.5 bg-zinc-300 rounded-full" />
-            </div>
-
-            {/* Header */}
-            <div className="px-6 py-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-zinc-900">
-                  {editingDebt ? 'Edit Record' : 'New Record'}
-                </h2>
-                <p className="text-sm text-zinc-500 font-medium">
-                  {direction === 'owed_to_me' ? 'Money owed to you' : 'Money you owe'}
-                </p>
-              </div>
-              <button
-                onClick={onClose}
-                className="w-8 h-8 rounded-full bg-zinc-200 flex items-center justify-center text-zinc-600 active:scale-90 transition-transform"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-6 pb-10">
-              {errorMessage && (
-                <div className="mb-6 p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-xs font-bold text-center animate-shake">
-                  {errorMessage}
-                </div>
-              )}
-              <form id="debt-form" onSubmit={handleSubmit} className="space-y-6">
-                {/* 1. Direction Toggles */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setDirection('owed_to_me')}
-                    className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
-                      direction === 'owed_to_me' 
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-900' 
-                        : 'bg-white border-zinc-100 text-zinc-400'
-                    }`}
-                  >
-                    <ArrowDownLeft className={`w-6 h-6 mb-1 ${direction === 'owed_to_me' ? 'text-emerald-600' : ''}`} />
-                    <span className="text-xs font-bold">Owed to Me</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDirection('i_owe')}
-                    className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
-                      direction === 'i_owe' 
-                        ? 'bg-rose-50 border-rose-500 text-rose-900' 
-                        : 'bg-white border-zinc-100 text-zinc-400'
-                    }`}
-                  >
-                    <ArrowUpRight className={`w-6 h-6 mb-1 ${direction === 'i_owe' ? 'text-rose-600' : ''}`} />
-                    <span className="text-xs font-bold">I Owe Them</span>
-                  </button>
-                </div>
-
-                {/* 2. Category */}
-                <div className="flex p-1 bg-zinc-200/50 rounded-xl">
-                  <button
-                    type="button"
-                    onClick={() => setCategory('personal')}
-                    className={`flex-1 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                      category === 'personal' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'
-                    }`}
-                  >
-                    <User className="w-4 h-4" /> Personal
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCategory('business')}
-                    className={`flex-1 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                      category === 'business' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'
-                    }`}
-                  >
-                    <Briefcase className="w-4 h-4" /> Business
-                  </button>
-                </div>
-
-                {/* 3. Name & Amount */}
-                <div className="space-y-4">
-                  <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden divide-y divide-zinc-100">
-                    <div className="px-4 py-3 flex items-center gap-3">
-                      <User className="w-5 h-5 text-zinc-400" />
-                      <input
-                        type="text"
-                        placeholder="Name (e.g. David)"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="flex-1 bg-transparent border-none outline-none text-base font-medium placeholder:text-zinc-400 py-1"
-                        required
-                      />
-                    </div>
-                    <div className="px-4 py-3 flex items-center gap-3">
-                      <span className="text-base font-bold text-zinc-400 w-5 text-center">{currency === 'DZD' ? '' : currency}</span>
-                      <input
-                        type="number"
-                        placeholder="0.00"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="flex-1 bg-transparent border-none outline-none text-2xl font-black placeholder:text-zinc-300 py-1"
-                        required
-                      />
-                      {currency === 'DZD' && <span className="text-sm font-bold text-zinc-400 uppercase">DZD</span>}
-                    </div>
-                    <div className="px-4 py-3 flex items-center gap-3">
-                      <Tag className="w-5 h-5 text-zinc-400" />
-                      <input
-                        type="text"
-                        placeholder="Purpose (e.g. Rent, Pizza)"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="flex-1 bg-transparent border-none outline-none text-base font-medium placeholder:text-zinc-400 py-1"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. Dates & Urgency */}
-                <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden divide-y divide-zinc-100">
-                  <div className="px-4 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Calendar className="w-5 h-5 text-zinc-400" />
-                      <span className="text-sm font-bold text-zinc-700">Debt Date</span>
-                    </div>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="bg-transparent border-none outline-none text-sm font-bold text-zinc-900"
-                    />
-                  </div>
-                  <div className="px-4 py-3 flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-5 h-5 text-zinc-400" />
-                        <span className="text-sm font-bold text-zinc-700">Due Date</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {!hasDueDate ? (
-                          <button 
-                            type="button"
-                            onClick={() => setHasDueDate(true)}
-                            className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md uppercase"
-                          >
-                            Set Date
-                          </button>
-                        ) : (
-                          <input
-                            type="date"
-                            value={dueDate}
-                            onChange={(e) => setDueDate(e.target.value)}
-                            className="bg-transparent border-none outline-none text-sm font-bold text-zinc-900"
-                          />
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setHasDueDate(!hasDueDate)}
-                      className={`w-full py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border-2 transition-all ${
-                        !hasDueDate 
-                          ? 'bg-zinc-900 border-zinc-900 text-white' 
-                          : 'bg-white border-zinc-100 text-zinc-400'
-                      }`}
-                    >
-                      {hasDueDate ? 'Switch to No Due Date' : 'No Due Date Enabled'}
-                    </button>
-                  </div>
-                  <div className="px-4 py-4 space-y-3">
-                    <span className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">Urgency</span>
-                    <div className="flex gap-2">
-                      {(['low', 'medium', 'high', 'urgent'] as PriorityLevel[]).map((p) => (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => setPriority(p)}
-                          className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase transition-all border-2 ${
-                            priority === p 
-                              ? p === 'urgent' ? 'bg-rose-50 border-rose-500 text-rose-600' 
-                                : p === 'high' ? 'bg-amber-50 border-amber-500 text-amber-600'
-                                : p === 'medium' ? 'bg-blue-50 border-blue-500 text-blue-600'
-                                : 'bg-zinc-100 border-zinc-400 text-zinc-600'
-                              : 'bg-white border-zinc-100 text-zinc-300'
-                          }`}
-                        >
-                          {p}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 5. Advanced Toggle */}
-                <button
-                  type="button"
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="w-full py-3 flex items-center justify-center gap-2 text-zinc-400 font-bold text-xs uppercase tracking-widest"
-                >
-                  {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  {showAdvanced ? 'Less Details' : 'More Details'}
-                </button>
-
-                {showAdvanced && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    className="space-y-4"
-                  >
-                    <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden divide-y divide-zinc-100">
-                      <div className="px-4 py-3 flex items-center gap-3">
-                        <Phone className="w-5 h-5 text-zinc-400" />
-                        <input
-                          type="tel"
-                          placeholder="Phone"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          className="flex-1 bg-transparent border-none outline-none text-base py-1"
-                        />
-                      </div>
-                      <div className="px-4 py-3 flex items-center gap-3">
-                        <Mail className="w-5 h-5 text-zinc-400" />
-                        <input
-                          type="email"
-                          placeholder="Email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="flex-1 bg-transparent border-none outline-none text-base py-1"
-                        />
-                      </div>
-                      <div className="px-4 py-3 flex items-center gap-3">
-                        <CreditCard className="w-5 h-5 text-zinc-400" />
-                        <input
-                          type="text"
-                          placeholder="CCP / BaridiMob / PayPal"
-                          value={paymentDetails}
-                          onChange={(e) => setPaymentDetails(e.target.value)}
-                          className="flex-1 bg-transparent border-none outline-none text-base py-1"
-                        />
-                      </div>
-                    </div>
-                    <div className="bg-white rounded-2xl border border-zinc-200 p-4">
-                      <textarea
-                        placeholder="Additional notes..."
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        className="w-full bg-transparent border-none outline-none text-base min-h-[100px] resize-none"
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </form>
-            </div>
-
-            {/* Footer */}
-            <div className="p-6 bg-white border-t border-zinc-100 flex gap-3">
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Type Selector */}
+            <div className="flex p-1 bg-zinc-100 rounded-2xl border border-zinc-200">
               <button
                 type="button"
-                onClick={onClose}
-                className="flex-1 py-4 rounded-2xl bg-zinc-100 text-zinc-500 font-bold active:scale-95 transition-transform"
+                onClick={() => setType(DebtType.OWE_ME)}
+                className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${
+                  type === DebtType.OWE_ME ? 'bg-white text-emerald-600 shadow-sm' : 'text-zinc-500'
+                }`}
               >
-                Cancel
+                Owed To Me
               </button>
               <button
-                type="submit"
-                form="debt-form"
-                disabled={isSaving}
-                className="flex-[2] py-4 rounded-2xl bg-zinc-950 text-white font-bold shadow-lg shadow-zinc-950/20 active:scale-95 transition-transform disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
+                type="button"
+                onClick={() => setType(DebtType.I_OWE)}
+                className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${
+                  type === DebtType.I_OWE ? 'bg-white text-rose-600 shadow-sm' : 'text-zinc-500'
+                }`}
               >
-                {isSaving ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  editingDebt ? 'Update Record' : 'Create Record'
-                )}
+                I Owe
               </button>
             </div>
-          </motion.div>
-        </>
-      )}
+
+            <div className="space-y-4">
+              {/* Contact Name Autocomplete */}
+              <div className="space-y-2 relative">
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5" />
+                  Contact Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Who is this for?"
+                  className="w-full px-5 py-4 bg-zinc-50 border border-zinc-200 rounded-[20px] focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all outline-none text-sm font-bold"
+                  value={contactName}
+                  onChange={(e) => {
+                    setContactName(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                />
+                
+                {showSuggestions && filteredContacts.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-zinc-200 rounded-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                    {filteredContacts.map((contact, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        className="w-full px-5 py-4 text-left hover:bg-zinc-50 flex items-center justify-between border-b border-zinc-100 last:border-0 transition-colors"
+                        onClick={() => {
+                          setContactName(contact.name);
+                          setContactInfo(contact.info);
+                          setContactEmail(contact.email);
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-bold text-zinc-900">{contact.name}</span>
+                          <span className="text-[10px] text-zinc-500 font-medium uppercase">{contact.info || contact.email || 'Saved contact'}</span>
+                        </div>
+                        <Plus className="w-4 h-4 text-emerald-500" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5" />
+                    Phone / Info
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Optional info"
+                    className="w-full px-5 py-4 bg-zinc-50 border border-zinc-200 rounded-[20px] focus:ring-2 focus:ring-zinc-900 outline-none text-sm font-bold"
+                    value={contactInfo}
+                    onChange={(e) => setContactInfo(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <AtSign className="w-3.5 h-3.5" />
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Email address"
+                    className="w-full px-5 py-4 bg-zinc-50 border border-zinc-200 rounded-[20px] focus:ring-2 focus:ring-zinc-900 outline-none text-sm font-bold"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5" />
+                  Amount ({currency})
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    placeholder="0.00"
+                    className="w-full pl-12 pr-5 py-5 bg-zinc-50 border border-zinc-200 rounded-[24px] focus:ring-2 focus:ring-zinc-900 outline-none text-2xl font-black"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                  />
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-xl font-black text-zinc-300">{currency}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5" />
+                  Category & Priority
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value as any)}
+                    className="w-full px-5 py-4 bg-zinc-50 border border-zinc-200 rounded-[20px] focus:ring-2 focus:ring-zinc-900 outline-none text-sm font-bold appearance-none"
+                  >
+                    <option value="personal">Personal</option>
+                    <option value="business">Business</option>
+                  </select>
+                  <select
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value as any)}
+                    className="w-full px-5 py-4 bg-zinc-50 border border-zinc-200 rounded-[20px] focus:ring-2 focus:ring-zinc-900 outline-none text-sm font-bold appearance-none"
+                  >
+                    <option value="low">Low Priority</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent 🚨</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  className="w-full px-5 py-4 bg-zinc-50 border border-zinc-200 rounded-[20px] focus:ring-2 focus:ring-zinc-900 outline-none text-sm font-bold"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  className="w-full px-5 py-4 bg-zinc-50 border border-zinc-200 rounded-[20px] focus:ring-2 focus:ring-zinc-900 outline-none text-sm font-bold"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                <Info className="w-3.5 h-3.5" />
+                Short Title / Reason
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Lunch, Groceries, Loan"
+                className="w-full px-5 py-4 bg-zinc-50 border border-zinc-200 rounded-[20px] focus:ring-2 focus:ring-zinc-900 outline-none text-sm font-bold"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            <div className="pt-4">
+              <button
+                type="submit"
+                className={`w-full py-5 rounded-[24px] text-lg font-black transition-all shadow-xl active:scale-95 ${
+                  type === DebtType.OWE_ME 
+                    ? 'bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-400' 
+                    : 'bg-rose-500 text-white shadow-rose-500/20 hover:bg-rose-400'
+                }`}
+              >
+                {editingDebt ? 'Save Changes' : 'Record Entry'}
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </div>
     </AnimatePresence>
   );
-};
+}

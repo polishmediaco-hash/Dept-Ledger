@@ -14,6 +14,7 @@ function offsetDays(days: number): string {
 export const INITIAL_SAMPLE_DEBTS: DebtItem[] = [
   {
     id: 'debt-1',
+    ownerId: 'sample-user',
     title: 'Brand Identity & Web Redesign Invoice #204',
     direction: 'owed_to_me',
     category: 'business',
@@ -49,6 +50,7 @@ export const INITIAL_SAMPLE_DEBTS: DebtItem[] = [
   },
   {
     id: 'debt-2',
+    ownerId: 'sample-user',
     title: 'MacBook Pro Hardware Loan (Studio Upgrade)',
     direction: 'i_owe',
     category: 'business',
@@ -84,6 +86,7 @@ export const INITIAL_SAMPLE_DEBTS: DebtItem[] = [
   },
   {
     id: 'debt-3',
+    ownerId: 'sample-user',
     title: 'Weekend Trip AirBnB & Grocery Split',
     direction: 'owed_to_me',
     category: 'personal',
@@ -109,6 +112,7 @@ export const INITIAL_SAMPLE_DEBTS: DebtItem[] = [
   },
   {
     id: 'debt-4',
+    ownerId: 'sample-user',
     title: 'Freelance Mobile App QA & Beta Testing',
     direction: 'i_owe',
     category: 'business',
@@ -135,6 +139,7 @@ export const INITIAL_SAMPLE_DEBTS: DebtItem[] = [
   },
   {
     id: 'debt-5',
+    ownerId: 'sample-user',
     title: 'Emergency Car Transmission Repair Loan',
     direction: 'i_owe',
     category: 'personal',
@@ -169,6 +174,7 @@ export const INITIAL_SAMPLE_DEBTS: DebtItem[] = [
   },
   {
     id: 'debt-6',
+    ownerId: 'sample-user',
     title: 'Concert Tickets & VIP Passes (2x)',
     direction: 'owed_to_me',
     category: 'personal',

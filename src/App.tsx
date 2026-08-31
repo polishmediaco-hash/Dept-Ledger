@@ -57,9 +57,8 @@ export default function App() {
     }
   }, [user]);
 
-  // iPhone View Tab Navigation
+  // State for PWA standalone detection
   const [activeNavTab, setActiveNavTab] = useState<'ledger' | 'balance' | 'settle' | 'advisor'>('ledger');
-  const [isFrameEmulated] = useState(true);
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
@@ -399,27 +398,26 @@ export default function App() {
   };
 
   const handleBottomTabSelect = (tab: 'ledger' | 'balance' | 'settle' | 'advisor') => {
-    setActiveNavTab(tab);
     if (tab === 'balance') {
+      setActiveNavTab('balance');
       setIsFullBalanceModalOpen(true);
     } else if (tab === 'settle') {
       setIsSettleModalOpen(true);
     } else if (tab === 'advisor') {
       setIsPriorityAdvisorOpen(true);
+    } else {
+      setActiveNavTab('ledger');
     }
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center text-zinc-900 font-sans selection:bg-zinc-900 selection:text-white overflow-hidden">
+    <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-start text-zinc-900 font-sans selection:bg-zinc-900 selection:text-white overflow-hidden">
       
-      {/* iPhone Device Wrapper - Seamless on Mobile */}
-      <div className={`w-full h-full sm:h-auto ${isStandalone ? '' : isFrameEmulated ? 'max-w-[430px] sm:my-3' : 'max-w-md'} bg-zinc-50 flex flex-col min-h-screen ${isStandalone ? '' : 'sm:min-h-[880px] sm:max-h-[92vh] sm:rounded-[44px] shadow-2xl border-0 sm:border-8 sm:border-zinc-800'} overflow-hidden relative ring-1 ring-zinc-900/10`}>
+      {/* Main App Container - Full Screen with Safe Area Support */}
+      <div className="w-full h-full flex flex-col min-h-screen max-w-2xl mx-auto bg-zinc-50 relative pt-[env(safe-area-inset-top)]">
         
-        {/* Status Bar for PWA/Mobile look */}
-        <IPhoneStatusBar urgentCount={urgentCount} />
-
         {/* iOS Navigation Header */}
-        <header className="px-4 py-3 bg-white/90 backdrop-blur-md border-b border-zinc-200/70 flex items-center justify-between sticky top-0 z-30">
+        <header className="px-4 py-4 bg-white/90 backdrop-blur-md border-b border-zinc-200/70 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-xl bg-zinc-900 text-emerald-400 flex items-center justify-center font-bold shadow-xs">
               <DollarSign className="w-4 h-4" />
@@ -627,6 +625,7 @@ export default function App() {
         onSave={handleSaveDebt}
         editingDebt={editingDebt}
         currency={currency}
+        existingDebts={debts}
       />
 
       <SettleDebtModal
@@ -647,7 +646,10 @@ export default function App() {
 
       <FullBalanceModal
         isOpen={isFullBalanceModalOpen}
-        onClose={() => setIsFullBalanceModalOpen(false)}
+        onClose={() => {
+          setIsFullBalanceModalOpen(false);
+          setActiveNavTab('ledger');
+        }}
         debts={debts}
         currency={currency}
         onQuickSettle={handleQuickSettle}

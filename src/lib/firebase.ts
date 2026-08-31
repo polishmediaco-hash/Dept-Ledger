@@ -22,7 +22,7 @@ export const auth = getAuth(app);
 // Ensure persistence is set to local
 setPersistence(auth, browserLocalPersistence).catch(err => console.error('Persistence error:', err));
 
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || undefined);
 export const googleProvider = new GoogleAuthProvider();
 
 export enum OperationType {
@@ -51,7 +51,9 @@ interface FirestoreErrorInfo {
   }
 }
 
-export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+// Enhanced Firestore Error Handling
+export function handleFirestoreError(error: any, operationType: OperationType, path: string | null) {
+  const isUnavailable = error?.code === 'unavailable';
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
@@ -68,7 +70,19 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  
+  console.error('Firestore Error Detailed:', {
+    code: error?.code,
+    message: error?.message,
+    operation: operationType,
+    path,
+    isUnavailable
+  });
+
+  if (isUnavailable) {
+    console.warn('Firestore is currently unavailable. This might be a temporary network issue or the database is still provisioning.');
+  }
+
   throw new Error(JSON.stringify(errInfo));
 }
 
@@ -76,10 +90,9 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 export async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
+    console.log('Firestore: Connection successful');
   } catch (error) {
-    if(error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration.");
-    }
+    console.error('Firestore: Connection test failed:', error);
   }
 }
 
