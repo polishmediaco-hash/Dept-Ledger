@@ -68,11 +68,11 @@ export default function App() {
                                document.referrer.includes('android-app://');
     setIsStandalone(isInStandaloneMode);
     
-    // Prevent scrolling bounce on iOS
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    document.body.style.height = '100%';
+    // Allow natural scrolling
+    document.body.style.overflow = 'auto';
+    document.body.style.position = 'static';
+    document.body.style.width = 'auto';
+    document.body.style.height = 'auto';
   }, []);
   
   // Global Notification State
@@ -411,13 +411,15 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-zinc-50 flex flex-col font-sans selection:bg-zinc-900 selection:text-white">
+    <div className="h-dvh w-full bg-zinc-50 flex flex-col font-sans selection:bg-zinc-900 selection:text-white overflow-hidden">
       
       {/* Main App Container */}
-      <div className="w-full flex-1 flex flex-col max-w-md mx-auto bg-zinc-50 relative pt-[env(safe-area-inset-top)]">
+      <div className="w-full flex-1 flex flex-col max-w-md mx-auto bg-zinc-50 relative overflow-hidden">
+        
+        <IPhoneStatusBar urgentCount={urgentCount} />
         
         {/* iOS Navigation Header */}
-        <header className="px-4 py-4 bg-white/90 backdrop-blur-md border-b border-zinc-200/70 flex items-center justify-between sticky top-0 z-30">
+        <header className="px-4 py-4 bg-white/90 backdrop-blur-md border-b border-zinc-200/70 flex items-center justify-between sticky top-0 z-30 shrink-0">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-xl bg-zinc-900 text-emerald-400 flex items-center justify-center font-bold shadow-xs">
               <DollarSign className="w-4 h-4" />
@@ -471,7 +473,7 @@ export default function App() {
         </header>
 
         {/* Scrollable iPhone Main Content Area */}
-        <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-32">
+        <main className="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-32 scroll-smooth">
           
           {/* 3 Core Primary Action Buttons: Add Debt, Settle Debt, Full Balance */}
           <IPhoneMainActions

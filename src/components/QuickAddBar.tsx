@@ -65,7 +65,6 @@ export const QuickAddBar: React.FC<QuickAddBarProps> = ({
         company: '',
         relationship: category === 'personal' ? 'Friend / Family' : 'Business',
         phone: '',
-        email: '',
         paymentDetails: '',
       },
       notes: '',

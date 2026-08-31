@@ -18,7 +18,7 @@ import {
   Clock, 
   CreditCard, 
   Phone, 
-  Mail, 
+  Hash, 
   Copy, 
   Check, 
   Edit3, 
@@ -26,8 +26,7 @@ import {
   CheckCircle2, 
   MessageSquare,
   ChevronRight,
-  Plus,
-  AtSign
+  Plus
 } from 'lucide-react';
 
 interface DebtDetailModalProps {
@@ -207,7 +206,7 @@ export const DebtDetailModal: React.FC<DebtDetailModalProps> = ({
                   {debt.contact.ccpNumber && (
                     <div className="px-5 py-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <AtSign className="w-5 h-5 text-zinc-400" />
+                        <Hash className="w-5 h-5 text-zinc-400" />
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">CCP Number</span>
                           <span className="text-sm font-bold text-zinc-900">{debt.contact.ccpNumber}</span>

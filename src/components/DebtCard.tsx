@@ -162,14 +162,14 @@ export const DebtCard: React.FC<DebtCardProps> = ({
               </span>
             </div>
 
-            <div className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 mt-0.5">
+            <div className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 mt-0.5 flex flex-wrap items-baseline gap-x-1">
               {isSettled ? (
                 <span className="text-emerald-700 flex items-center gap-1.5 text-lg">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                   <span>Paid in full</span>
                 </span>
               ) : (
-                <span className={isOwedToMe ? 'text-emerald-700' : 'text-zinc-900'}>
+                <span className={`${isOwedToMe ? 'text-emerald-700' : 'text-zinc-900'} break-all`}>
                   {formatCurrency(balance, currency)}
                 </span>
               )}

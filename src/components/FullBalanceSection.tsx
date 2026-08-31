@@ -56,21 +56,21 @@ export const FullBalanceSection: React.FC<FullBalanceSectionProps> = ({
   return (
     <div className="space-y-3 mb-6">
       {/* Title & Top Net Card */}
-      <div className="bg-zinc-900 text-white rounded-2xl p-4 shadow-sm space-y-3">
+      <div className="bg-white border border-zinc-200 text-zinc-900 rounded-2xl p-4 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-zinc-800 text-emerald-400 flex items-center justify-center font-bold">
+            <div className="h-7 w-7 rounded-lg bg-zinc-100 text-emerald-600 flex items-center justify-center font-bold">
               <Scale className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white tracking-tight">Full Balance (2 Columns)</h2>
-              <p className="text-[10px] text-zinc-400">Personal & Business spaces</p>
+              <h2 className="text-sm font-bold text-zinc-900 tracking-tight">Full Balance Overview</h2>
+              <p className="text-[10px] text-zinc-400">Aggregated financial status</p>
             </div>
           </div>
 
           <div className="text-right">
             <span className="text-[9px] uppercase font-bold text-zinc-400 block">Net Balance</span>
-            <span className={`text-sm font-extrabold ${netBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className={`text-sm font-extrabold ${netBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
               {netBalance >= 0 ? '+' : '-'}{formatCurrency(Math.abs(netBalance), currency)}
             </span>
           </div>
@@ -78,37 +78,37 @@ export const FullBalanceSection: React.FC<FullBalanceSectionProps> = ({
 
         {/* 2 Big Totals */}
         <div className="grid grid-cols-2 gap-2 pt-1">
-          <div className="p-2.5 rounded-xl bg-rose-950/60 border border-rose-900/60">
+          <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-100">
             <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[10px] uppercase font-extrabold text-rose-400">Column 1: I Owe</span>
-              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-rose-900 text-rose-200">
+              <span className="text-[10px] uppercase font-extrabold text-rose-600">Column 1: I Owe</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700">
                 {iOweDebts.length}
               </span>
             </div>
-            <div className="text-base font-extrabold text-rose-300">
+            <div className="text-base font-extrabold text-rose-700">
               {formatCurrency(totalIOwe, currency)}
             </div>
           </div>
 
-          <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-900/60">
+          <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-100">
             <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[10px] uppercase font-extrabold text-emerald-400">Column 2: Owed To Me</span>
-              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-900 text-emerald-200">
+              <span className="text-[10px] uppercase font-extrabold text-emerald-600">Column 2: Owed To Me</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-700">
                 {owedToMeDebts.length}
               </span>
             </div>
-            <div className="text-base font-extrabold text-emerald-300">
+            <div className="text-base font-extrabold text-emerald-700">
               {formatCurrency(totalOwedToMe, currency)}
             </div>
           </div>
         </div>
 
         {/* Segmented control for switching column view on small screens */}
-        <div className="flex bg-zinc-800 p-0.5 rounded-xl text-[11px] font-bold">
+        <div className="flex bg-zinc-100 p-0.5 rounded-xl text-[11px] font-bold">
           <button
             onClick={() => setMobileTab('both')}
             className={`flex-1 py-1 rounded-lg transition-all ${
-              mobileTab === 'both' ? 'bg-zinc-700 text-white shadow-xs' : 'text-zinc-400'
+              mobileTab === 'both' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200' : 'text-zinc-500'
             }`}
           >
             All Spaces
@@ -116,18 +116,18 @@ export const FullBalanceSection: React.FC<FullBalanceSectionProps> = ({
           <button
             onClick={() => setMobileTab('i_owe')}
             className={`flex-1 py-1 rounded-lg transition-all ${
-              mobileTab === 'i_owe' ? 'bg-rose-900 text-rose-100 shadow-xs' : 'text-zinc-400'
+              mobileTab === 'i_owe' ? 'bg-rose-500 text-white shadow-sm' : 'text-zinc-500'
             }`}
           >
-            I Owe ({iOweDebts.length})
+            I Owe
           </button>
           <button
             onClick={() => setMobileTab('owed_to_me')}
             className={`flex-1 py-1 rounded-lg transition-all ${
-              mobileTab === 'owed_to_me' ? 'bg-emerald-900 text-emerald-100 shadow-xs' : 'text-zinc-400'
+              mobileTab === 'owed_to_me' ? 'bg-emerald-500 text-white shadow-sm' : 'text-zinc-500'
             }`}
           >
-            Owed to Me ({owedToMeDebts.length})
+            Owed to Me
           </button>
         </div>
       </div>

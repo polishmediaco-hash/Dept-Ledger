@@ -75,14 +75,6 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
     window.open(url, '_blank');
   };
 
-  const handleEmail = () => {
-    if (!debt) return;
-    const subject = encodeURIComponent(`Payment Reminder: ${debt.title}`);
-    const body = encodeURIComponent(customMessage);
-    const email = debt.contact.email || '';
-    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-  };
-
   return (
     <AnimatePresence>
       {isOpen && debt && (
@@ -162,35 +154,25 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
               </div>
 
               {/* Actions */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={handleCopy}
-                  className="flex flex-col items-center gap-2 p-4 rounded-3xl bg-zinc-900 border border-zinc-800 active:scale-95 transition-all group"
+                  className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-zinc-900 border border-zinc-800 active:scale-95 transition-all group"
                 >
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${copied ? 'bg-emerald-500/10 text-emerald-400' : 'bg-zinc-800 text-zinc-400 group-active:bg-zinc-700'}`}>
-                    {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${copied ? 'bg-emerald-500/10 text-emerald-400' : 'bg-zinc-800 text-zinc-400 group-active:bg-zinc-700'}`}>
+                    {copied ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Copy</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Copy Message</span>
                 </button>
 
                 <button
                   onClick={handleWhatsApp}
-                  className="flex flex-col items-center gap-2 p-4 rounded-3xl bg-zinc-900 border border-zinc-800 active:scale-95 transition-all group"
+                  className="flex flex-col items-center gap-2 p-6 rounded-3xl bg-zinc-900 border border-zinc-800 active:scale-95 transition-all group"
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-active:bg-emerald-500/20">
-                    <Share2 className="w-5 h-5" />
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-active:bg-emerald-500/20">
+                    <Share2 className="w-6 h-6" />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest">WhatsApp</span>
-                </button>
-
-                <button
-                  onClick={handleEmail}
-                  className="flex flex-col items-center gap-2 p-4 rounded-3xl bg-zinc-900 border border-zinc-800 active:scale-95 transition-all group"
-                >
-                  <div className="w-10 h-10 rounded-2xl bg-zinc-800 text-zinc-400 flex items-center justify-center group-active:bg-zinc-700">
-                    <Mail className="w-5 h-5" />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Email</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Send WhatsApp</span>
                 </button>
               </div>
             </div>

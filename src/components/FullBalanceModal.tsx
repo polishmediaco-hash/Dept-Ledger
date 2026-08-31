@@ -135,17 +135,17 @@ export const FullBalanceModal: React.FC<FullBalanceModalProps> = ({
                 </div>
               </div>
 
-              {/* Charts placeholder/info */}
-              <div className="mt-8 p-6 bg-zinc-900 rounded-[24px] text-white overflow-hidden relative">
+              {/* Financial Health Summary */}
+              <div className="mt-8 p-6 bg-zinc-50 border border-zinc-200 rounded-[24px] text-zinc-900 overflow-hidden relative">
                  <div className="relative z-10">
                    <h3 className="text-lg font-bold mb-1">Financial Health</h3>
-                   <p className="text-zinc-400 text-sm mb-4">Your net balance is {currency}{(totalOwedToMe - totalIOwe).toLocaleString()}</p>
+                   <p className="text-zinc-500 text-sm mb-4">Your net balance is {currency}{(totalOwedToMe - totalIOwe).toLocaleString()}</p>
                    <div className="flex gap-2">
-                     <div className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-full border border-emerald-500/30 uppercase">Optimized</div>
-                     <div className="px-3 py-1 bg-zinc-800 text-zinc-400 text-[10px] font-bold rounded-full border border-zinc-700 uppercase">Verified</div>
+                     <div className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full border border-emerald-200 uppercase tracking-wider">Optimized</div>
+                     <div className="px-3 py-1 bg-zinc-100 text-zinc-500 text-[10px] font-bold rounded-full border border-zinc-200 uppercase tracking-wider">Verified</div>
                    </div>
                  </div>
-                 <DollarSign className="absolute -right-4 -bottom-4 w-32 h-32 text-white/5 rotate-12" />
+                 <DollarSign className="absolute -right-4 -bottom-4 w-32 h-32 text-zinc-900/5 rotate-12" />
               </div>
             </div>
 

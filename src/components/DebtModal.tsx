@@ -8,7 +8,7 @@ import {
   Calendar, 
   Tag, 
   Info, 
-  AtSign, 
+  Hash, 
   Phone,
   Plus,
   AlertCircle
@@ -179,17 +179,19 @@ export function DebtModal({ isOpen, onClose, onSave, editingDebt, currency, exis
                 {showSuggestions && filteredContacts.length > 0 && (
                   <div className="absolute z-50 w-full mt-1 bg-white border border-zinc-200 rounded-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2">
                     {filteredContacts.map((contact, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        className="w-full px-5 py-4 text-left hover:bg-zinc-50 flex items-center justify-between border-b border-zinc-100 last:border-0 transition-colors"
-                        onClick={() => {
-                          setContactName(contact.name);
-                          setContactInfo(contact.info);
-                          setCcpNumber(contact.ccp);
-                          setShowSuggestions(false);
-                        }}
-                      >
+                        <button
+                          key={idx}
+                          type="button"
+                          className="w-full px-5 py-4 text-left hover:bg-zinc-50 flex items-center justify-between border-b border-zinc-100 last:border-0 transition-colors"
+                          onMouseDown={(e) => {
+                            // Using onMouseDown to trigger before input onBlur if added later
+                            e.preventDefault(); 
+                            setContactName(contact.name);
+                            setContactInfo(contact.info);
+                            setCcpNumber(contact.ccp);
+                            setShowSuggestions(false);
+                          }}
+                        >
                         <div className="flex flex-col">
                           <span className="font-bold text-zinc-900">{contact.name}</span>
                           <span className="text-[10px] text-zinc-500 font-medium uppercase">{contact.info || contact.ccp || 'Saved contact'}</span>
@@ -217,7 +219,7 @@ export function DebtModal({ isOpen, onClose, onSave, editingDebt, currency, exis
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <AtSign className="w-3.5 h-3.5" />
+                    <Hash className="w-3.5 h-3.5" />
                     CCP Number
                   </label>
                   <input
@@ -237,17 +239,21 @@ export function DebtModal({ isOpen, onClose, onSave, editingDebt, currency, exis
                   <DollarSign className="w-3.5 h-3.5" />
                   Amount ({currency})
                 </label>
-                <div className="relative">
+                <div className="relative group">
+                  <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none z-10">
+                    <span className="text-lg font-black text-zinc-400">{currency}</span>
+                  </div>
                   <input
                     type="number"
                     step="any"
                     required
                     placeholder="0.00"
-                    className="w-full pl-24 pr-5 py-5 bg-zinc-50 border border-zinc-200 rounded-[24px] focus:ring-2 focus:ring-zinc-900 outline-none text-2xl font-black"
+                    className={`w-full pr-5 py-5 bg-zinc-50 border border-zinc-200 rounded-[24px] focus:ring-2 focus:ring-zinc-900 outline-none text-2xl font-black ${
+                      currency.length > 3 ? 'pl-28' : 'pl-20'
+                    }`}
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                   />
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-lg font-black text-zinc-400">{currency}</span>
                 </div>
               </div>
 
