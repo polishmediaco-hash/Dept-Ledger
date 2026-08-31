@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "User profile and preferences.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "currencyPreference": { "type": "string", "maxLength": 10 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "updatedAt"]
+    },
+    "debt": {
+      "title": "Debt",
+      "description": "A record of a debt either owed to the user or by the user.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "direction": { "type": "string", "enum": ["owed_to_me", "i_owe"] },
+        "category": { "type": "string", "enum": ["personal", "business"] },
+        "amount": { "type": "number" },
+        "paidAmount": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 10 },
+        "startDate": { "type": "string", "format": "date" },
+        "dueDate": { "type": "string", "format": "date" },
+        "priority": { "type": "string", "enum": ["urgent", "high", "medium", "low"] },
+        "priorityReason": { "type": "string", "maxLength": 500 },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "maxLength": 100 },
+            "email": { "type": "string", "format": "email" },
+            "phone": { "type": "string", "maxLength": 30 },
+            "company": { "type": "string", "maxLength": 100 },
+            "relationship": { "type": "string", "maxLength": 100 },
+            "paymentDetails": { "type": "string", "maxLength": 500 }
+          },
+          "required": ["name"]
+        },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "tags": { "type": "array", "items": { "type": "string", "maxLength": 50 }, "maxItems": 20 },
+        "payments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "amount": { "type": "number" },
+              "date": { "type": "string", "format": "date" },
+              "note": { "type": "string", "maxLength": 500 },
+              "paymentMethod": { "type": "string", "maxLength": 100 },
+              "createdAt": { "type": "string", "format": "date-time" }
+            },
+            "required": ["id", "amount", "date", "createdAt"]
+          }
+        },
+        "isArchived": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string", "description": "UID of the user who owns this debt." }
+      },
+      "required": ["title", "direction", "category", "amount", "paidAmount", "currency", "startDate", "priority", "contact", "createdAt", "updatedAt", "ownerId"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "user",
+      "description": "Public and private user data."
+    },
+    "users/{userId}/debts/{debtId}": {
+      "schema": "debt",
+      "description": "User's debt records."
+    }
+  }
+}

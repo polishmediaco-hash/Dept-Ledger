@@ -1,0 +1,6 @@
+{
+  "name": "Debt & Loan Tracker",
+  "description": "Track who owes you and who you owe across personal and business finances, with deadlines, aging duration, priority levels, contact info, and repayment planning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

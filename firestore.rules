@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection Test
+    match /test/connection {
+      allow read: if request.auth != null;
+    }
+
+    // Helpers
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // 2. User Profiles
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      // 3. Debts
+      match /debts/{debtId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}
